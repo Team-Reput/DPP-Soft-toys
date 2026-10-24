@@ -1,24 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/dpp_models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
-/// Shared pieces reused across screens: section title, detail list, chips,
-/// storybox, section card, footer note, disclaimer, eyebrow + heading combo.
-/// Mirrors the matching CSS classes in the source HTML (`.section-title`,
-/// `.detail-list`, `.chip`, `.storybox`, `.section-card`, `.footer-note`,
-/// `.disclaimer`, `.eyebrow`, `.heading`).
+/// Shared pieces reused across both the mobile and desktop screen variants:
+/// section title, detail list, chips, storybox, section card, footer note,
+/// disclaimer, eyebrow + heading combo. Mirrors the matching CSS classes in
+/// the source HTML (`.section-title`, `.detail-list`, `.chip`, `.storybox`,
+/// `.section-card`, `.footer-note`, `.disclaimer`, `.eyebrow`, `.heading`).
+///
+/// Every size here is run through ScreenUtil (`.w`/`.h`/`.r`, and `.sp` via
+/// [AppTextStyles]) so it scales with the device. Where the desktop CSS
+/// (`@media(min-width:700px)` in the source "Desktop" HTML) uses visibly
+/// different sizes than the mobile CSS, these widgets take a [desktop] flag
+/// to switch between the two; where the desktop rules don't touch a class
+/// at all, there's just one scaled size shared by both screen variants.
 
 class SectionTitle extends StatelessWidget {
   final String text;
-  const SectionTitle(this.text, {super.key});
+  final bool desktop;
+  const SectionTitle(this.text, {super.key, this.desktop = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 25, bottom: 12),
-      child: Text(text, style: AppTextStyles.sectionTitle),
+      padding: EdgeInsets.only(
+        top: (desktop ? 28 : 25).h,
+        bottom: (desktop ? 14 : 12).h,
+      ),
+      child: Text(
+        text,
+        style: AppTextStyles.display(
+          size: desktop ? 25 : 20,
+          weight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -27,12 +45,14 @@ class EyebrowHeading extends StatelessWidget {
   final String eyebrow;
   final String heading; // use \n for <br>
   final String intro;
+  final bool desktop;
 
   const EyebrowHeading({
     super.key,
     required this.eyebrow,
     required this.heading,
     required this.intro,
+    this.desktop = false,
   });
 
   @override
@@ -40,14 +60,31 @@ class EyebrowHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(eyebrow, style: AppTextStyles.eyebrow),
-        Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 12),
-          child: Text(heading, style: AppTextStyles.heading),
+        Text(
+          eyebrow,
+          style: AppTextStyles.body(
+            size: desktop ? 12 : 11,
+            weight: FontWeight.w800,
+            color: AppColors.eyebrow,
+          ).copyWith(letterSpacing: 1.8),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Text(intro, style: AppTextStyles.intro),
+          padding: EdgeInsets.only(top: (desktop ? 13 : 8).h, bottom: 12.h),
+          child: Text(
+            heading,
+            style: AppTextStyles.display(size: desktop ? 54 : 33, height: 1.08),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(bottom: (desktop ? 28 : 20).h),
+          child: Text(
+            intro,
+            style: AppTextStyles.body(
+              size: desktop ? 16 : 13,
+              color: AppColors.muted,
+              height: desktop ? 1.7 : 1.65,
+            ),
+          ),
         ),
       ],
     );
@@ -56,7 +93,8 @@ class EyebrowHeading extends StatelessWidget {
 
 class DetailList extends StatelessWidget {
   final List<DetailRow> rows;
-  const DetailList(this.rows, {super.key});
+  final bool desktop;
+  const DetailList(this.rows, {super.key, this.desktop = false});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +102,7 @@ class DetailList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.paper,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(19),
+        borderRadius: BorderRadius.circular((desktop ? 22 : 19).r),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -72,7 +110,10 @@ class DetailList extends StatelessWidget {
           final row = rows[i];
           final isLast = i == rows.length - 1;
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+            padding: EdgeInsets.symmetric(
+              horizontal: (desktop ? 19 : 15).w,
+              vertical: (desktop ? 17 : 13).h,
+            ),
             decoration: BoxDecoration(
               border: isLast
                   ? null
@@ -88,13 +129,23 @@ class DetailList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: Text(row.label, style: AppTextStyles.detailLabel),
+                  child: Text(
+                    row.label,
+                    style: AppTextStyles.body(
+                      size: desktop ? 14 : 12,
+                      color: AppColors.muted,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 18),
+                SizedBox(width: 18.w),
                 Flexible(
                   child: Text(
                     row.value,
-                    style: AppTextStyles.detailValue,
+                    style: AppTextStyles.body(
+                      size: desktop ? 14 : 12,
+                      weight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
                     textAlign: TextAlign.right,
                   ),
                 ),
@@ -114,15 +165,15 @@ class ChipsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 7,
-      runSpacing: 7,
+      spacing: 7.w,
+      runSpacing: 7.h,
       children: chips
           .map(
             (c) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: AppColors.chipBg,
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(100.r),
               ),
               child: Text('${c.emoji} ${c.label}', style: AppTextStyles.chip),
             ),
@@ -136,43 +187,69 @@ class StoryBox extends StatelessWidget {
   final String emoji;
   final String title;
   final String text;
+  final bool desktop;
 
   const StoryBox({
     super.key,
     required this.emoji,
     required this.title,
     required this.text,
+    this.desktop = false,
   });
 
-  factory StoryBox.fromContent(StoryBoxContent content, {Key? key}) {
+  factory StoryBox.fromContent(
+    StoryBoxContent content, {
+    Key? key,
+    bool desktop = false,
+  }) {
     return StoryBox(
       key: key,
       emoji: content.emoji,
       title: content.title,
       text: content.text,
+      desktop: desktop,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      constraints: desktop ? BoxConstraints(maxWidth: 850.w) : null,
+      padding: EdgeInsets.fromLTRB(
+        (desktop ? 24 : 18).w,
+        (desktop ? 24 : 18).h,
+        (desktop ? 24 : 18).w,
+        (desktop ? 24 : 20).h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.storyboxBg,
-        borderRadius: BorderRadius.circular(23),
+        borderRadius: BorderRadius.circular(23.r),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 29)),
-          const SizedBox(width: 13),
+          Text(emoji, style: TextStyle(fontSize: 29.sp)),
+          SizedBox(width: 13.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.storyboxTitle),
-                const SizedBox(height: 5),
-                Text(text, style: AppTextStyles.storyboxText),
+                Text(
+                  title,
+                  style: AppTextStyles.display(
+                    size: desktop ? 20 : 17,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 5.h),
+                Text(
+                  text,
+                  style: AppTextStyles.body(
+                    size: desktop ? 14 : 12,
+                    color: AppColors.storyboxText,
+                    height: 1.6,
+                  ),
+                ),
               ],
             ),
           ),
@@ -185,35 +262,60 @@ class StoryBox extends StatelessWidget {
 class SectionCard extends StatelessWidget {
   final String? title;
   final Widget child;
-  final EdgeInsets margin;
+  final EdgeInsets? margin;
+  final bool desktop;
+  final double? maxWidth;
 
   const SectionCard({
     super.key,
     this.title,
     required this.child,
-    this.margin = const EdgeInsets.only(top: 14),
+    this.margin,
+    this.desktop = false,
+    this.maxWidth,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: margin,
-      padding: const EdgeInsets.all(17),
+    final card = Container(
+      margin: margin ?? EdgeInsets.only(top: 14.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: (desktop ? 26 : 17).w,
+        vertical: (desktop ? 23 : 17).h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.sectionCardBg,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular((desktop ? 23 : 22).r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null) ...[
-            Text(title!, style: AppTextStyles.sectionCardTitle),
-            const SizedBox(height: 9),
+            Text(
+              title!,
+              style: AppTextStyles.display(
+                size: desktop ? 22 : 18,
+                weight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 9.h),
           ],
-          child,
+          DefaultTextStyle.merge(
+            style: AppTextStyles.body(
+              size: desktop ? 14 : 12,
+              color: AppColors.sectionCardText,
+              height: 1.65,
+            ),
+            child: child,
+          ),
         ],
       ),
+    );
+    if (maxWidth == null) return card;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth!),
+      child: card,
     );
   }
 }
@@ -225,7 +327,7 @@ class FooterNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(7, 25, 7, 8),
+      padding: EdgeInsets.fromLTRB(7.w, 25.h, 7.w, 8.h),
       child: Text(
         text,
         textAlign: TextAlign.center,
@@ -237,13 +339,21 @@ class FooterNote extends StatelessWidget {
 
 class DisclaimerText extends StatelessWidget {
   final String text;
-  const DisclaimerText(this.text, {super.key});
+  final bool desktop;
+  const DisclaimerText(this.text, {super.key, this.desktop = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 15),
-      child: Text(text, style: AppTextStyles.disclaimer),
+      padding: EdgeInsets.only(top: 15.h),
+      child: Text(
+        text,
+        style: AppTextStyles.body(
+          size: desktop ? 12 : 10,
+          color: AppColors.disclaimer,
+          height: 1.65,
+        ),
+      ),
     );
   }
 }
@@ -261,19 +371,24 @@ class TinyRowsList extends StatelessWidget {
         final row = rows[i];
         final isLast = i == rows.length - 1;
         return Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
           decoration: BoxDecoration(
             border: isLast
                 ? null
                 : const Border(
-                    bottom: BorderSide(color: AppColors.tinyRowBorder, width: 1),
+                    bottom: BorderSide(
+                      color: AppColors.tinyRowBorder,
+                      width: 1,
+                    ),
                   ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(child: Text(row.label, style: AppTextStyles.tinyRowLabel)),
-              const SizedBox(width: 10),
+              Flexible(
+                child: Text(row.label, style: AppTextStyles.tinyRowLabel),
+              ),
+              SizedBox(width: 10.w),
               Flexible(
                 child: Text(
                   row.value,
@@ -299,20 +414,23 @@ class LinkDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = tiny ? AppTextStyles.tinyRowLabel : AppTextStyles.detailLabel;
-    final linkStyle = (tiny ? AppTextStyles.tinyRowValue : AppTextStyles.detailValue)
-        .copyWith(
-      color: AppColors.forest,
-      decoration: TextDecoration.underline,
-      decorationColor: AppColors.forest,
-    );
+    final labelStyle = tiny
+        ? AppTextStyles.tinyRowLabel
+        : AppTextStyles.detailLabel;
+    final linkStyle =
+        (tiny ? AppTextStyles.tinyRowValue : AppTextStyles.detailValue)
+            .copyWith(
+              color: AppColors.forest,
+              decoration: TextDecoration.underline,
+              decorationColor: AppColors.forest,
+            );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(child: Text(row.label, style: labelStyle)),
-          const SizedBox(width: 10),
+          SizedBox(width: 10.w),
           InkWell(
             onTap: () => launchUrl(
               Uri.parse(row.url),
@@ -353,14 +471,17 @@ class _ExpandableSectionState extends State<ExpandableSection> {
         InkWell(
           onTap: () => setState(() => _open = !_open),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     widget.label,
-                    style: AppTextStyles.body(size: 12, weight: FontWeight.w800),
+                    style: AppTextStyles.body(
+                      size: 12,
+                      weight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 Text(
@@ -371,10 +492,11 @@ class _ExpandableSectionState extends State<ExpandableSection> {
             ),
           ),
         ),
-        if (_open) Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: widget.child,
-        ),
+        if (_open)
+          Padding(
+            padding: EdgeInsets.only(top: 4.h),
+            child: widget.child,
+          ),
       ],
     );
   }
@@ -383,17 +505,26 @@ class _ExpandableSectionState extends State<ExpandableSection> {
 class NoteBox extends StatelessWidget {
   final String label;
   final String text;
+  final bool desktop;
 
-  const NoteBox({super.key, required this.label, required this.text});
+  const NoteBox({
+    super.key,
+    required this.label,
+    required this.text,
+    this.desktop = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: EdgeInsets.only(top: 16.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: (desktop ? 20 : 14).w,
+        vertical: (desktop ? 17 : 12).h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.noteBg,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(15.r),
         border: Border.all(
           color: AppColors.noteBorder,
           style: BorderStyle.solid,
@@ -401,11 +532,20 @@ class NoteBox extends StatelessWidget {
       ),
       child: RichText(
         text: TextSpan(
-          style: AppTextStyles.noteText,
+          style: AppTextStyles.body(
+            size: desktop ? 13 : 11,
+            color: AppColors.noteText,
+            height: 1.6,
+          ),
           children: [
             TextSpan(
               text: '$label ',
-              style: AppTextStyles.noteText.copyWith(fontWeight: FontWeight.w700),
+              style: AppTextStyles.body(
+                size: desktop ? 13 : 11,
+                color: AppColors.noteText,
+                height: 1.6,
+                weight: FontWeight.w700,
+              ),
             ),
             TextSpan(text: text),
           ],

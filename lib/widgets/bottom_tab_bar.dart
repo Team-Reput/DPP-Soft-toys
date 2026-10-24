@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -8,8 +9,19 @@ class TabItem {
   const TabItem(this.icon, this.label);
 }
 
-/// Bottom navigation bar mirroring `.tabbar` / `.tab` in the source HTML:
-/// Toy · Planet · Journey · Care · Brand.
+/// Shared tab list for both the mobile bottom bar and the desktop sidebar.
+/// Mirrors the `.tabbar` buttons in the source HTML: Toy · Planet ·
+/// Journey · Care · Brand.
+const List<TabItem> kTabItems = [
+  TabItem('🧸', 'Toy'),
+  TabItem('🌱', 'Planet'),
+  TabItem('🗺️', 'Journey'),
+  TabItem('💗', 'Care'),
+  TabItem('🌼', 'Brand'),
+];
+
+/// Mobile bottom navigation bar mirroring `.tabbar`/`.tab` in the source
+/// Mobile HTML.
 class BottomTabBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -20,13 +32,7 @@ class BottomTabBar extends StatelessWidget {
     required this.onTap,
   });
 
-  static const List<TabItem> items = [
-    TabItem('🧸', 'Toy'),
-    TabItem('🌱', 'Planet'),
-    TabItem('🗺️', 'Journey'),
-    TabItem('💗', 'Care'),
-    TabItem('🌼', 'Brand'),
-  ];
+  static const List<TabItem> items = kTabItems;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +41,14 @@ class BottomTabBar extends StatelessWidget {
         // Mirrors the `@media(max-width:359px)` compact-tab rule.
         final compact = constraints.maxWidth < 359;
         return Container(
-          height: 78,
+          height: 78.h,
           padding: EdgeInsets.only(
-            left: compact ? 4 : 8,
-            right: compact ? 4 : 8,
-            top: 7,
+            left: (compact ? 4 : 8).w,
+            right: (compact ? 4 : 8).w,
+            top: 7.h,
             bottom: MediaQuery.of(context).padding.bottom > 10
                 ? MediaQuery.of(context).padding.bottom
-                : 10,
+                : 10.h,
           ),
           decoration: BoxDecoration(
             color: AppColors.tabBarBg,
@@ -53,7 +59,7 @@ class BottomTabBar extends StatelessWidget {
               BoxShadow(
                 color: const Color(0x10624B22),
                 blurRadius: 26,
-                offset: const Offset(0, -10),
+                offset: Offset(0, -10.h),
               ),
             ],
           ),
@@ -65,7 +71,7 @@ class BottomTabBar extends StatelessWidget {
               return Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 100),
+                    constraints: BoxConstraints(maxWidth: 100.w),
                     child: _TabButton(
                       icon: item.icon,
                       label: item.label,
@@ -105,29 +111,32 @@ class _TabButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         child: Container(
-          constraints: BoxConstraints(minWidth: compact ? 0 : 58),
+          constraints: BoxConstraints(minWidth: compact ? 0 : 58.w),
           padding: EdgeInsets.symmetric(
-            horizontal: compact ? 2 : 5,
-            vertical: 7,
+            horizontal: (compact ? 2 : 5).w,
+            vertical: 7.h,
           ),
           decoration: BoxDecoration(
             color: active ? AppColors.tabActiveBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 icon,
-                style: TextStyle(fontSize: compact ? 20 : 22, height: 1.1),
+                style: TextStyle(fontSize: (compact ? 20 : 22).sp, height: 1.1),
               ),
-              const SizedBox(height: 3),
+              SizedBox(height: 3.h),
               Text(
                 label,
-                style: (active ? AppTextStyles.tabLabelActive : AppTextStyles.tabLabel)
-                    .copyWith(fontSize: compact ? 9 : 10),
+                style:
+                    (active
+                            ? AppTextStyles.tabLabelActive
+                            : AppTextStyles.tabLabel)
+                        .copyWith(fontSize: (compact ? 9 : 10).sp),
               ),
             ],
           ),
