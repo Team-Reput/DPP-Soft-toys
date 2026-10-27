@@ -5,5 +5,5 @@ class ApiConstants {
   static String get encryptionKey => _key;
 
   static const String softToysDppEndpoint =
-      'https://REPLACE_ME.example.com/getFlutterResponseForSoftToy';
+      'https://api-dev.reput.world/getToyDppProcessDetail';
 }

@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../api/dpp_api_service.dart';
-import '../data/dpp_models.dart';
+import '../data/dpp_process_models.dart';
 
-/// Holds the decrypted DPP response for the currently-scanned (or
-/// demo-seeded) product and exposes it to every screen as typed,
-/// per-tab models. All 5 screens read from this instead of a static
-/// data class.
+/// Holds the decrypted DPP response for the currently-scanned product and
+/// exposes it as [processDetail] — the REAL `getToyDppProcessDetail` shape
+/// (`dpp_process_models.dart`): batch info, the manufacturing processes
+/// (each with waste/water/energy/certification/material/production/
+/// transportation detail), wash-care, end-of-life and brand details. Every
+/// screen's own view-model reads from this.
 class DppProvider extends ChangeNotifier {
   final DppApiService _api = DppApiService();
 
@@ -20,21 +22,14 @@ class DppProvider extends ChangeNotifier {
   int get templateId => _templateId;
 
   // ── Data ─────────────────────────────────────────────────────────────
-  DppResponseModel? _dppModel;
+  DppProcessDetailModel? _processDetail;
   bool _isLoading = false;
   String? _error;
 
-  DppResponseModel? get dppModel => _dppModel;
+  DppProcessDetailModel? get processDetail => _processDetail;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  bool get hasData => _dppModel != null;
-
-  // ── Typed per-tab getters — what the screens actually read ────────────
-  ToyModel? get toy => _dppModel?.toy;
-  ImpactModel? get impact => _dppModel?.impact;
-  JourneyModel? get journey => _dppModel?.journey;
-  CareModel? get care => _dppModel?.care;
-  BrandModel? get brand => _dppModel?.brand;
+  bool get hasData => _processDetail != null;
 
   // ── Setters ─────────────────────────────────────────────────────────────
 
@@ -51,10 +46,7 @@ class DppProvider extends ChangeNotifier {
 
   // ── Data loading — real backend call ─────────────────────────────────
 
-  Future<void> loadDpp({
-    required int brandId,
-    required int batchId,
-  }) async {
+  Future<void> loadDpp({required int brandId, required int batchId}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -68,14 +60,14 @@ class DppProvider extends ChangeNotifier {
         final prettyJson = const JsonEncoder.withIndent('  ').convert(raw);
         debugPrint('🔓 Decrypted DPP response structure:\n$prettyJson');
       }
-      _dppModel = DppResponseModel.fromJson(raw);
-    } on DppNotFoundException catch (e) {
+      _processDetail = DppProcessDetailModel.fromJson(raw);
+    } on DppProcessDetailException catch (e) {
       _error = e.message;
-      _dppModel = null;
+      _processDetail = null;
       debugPrint('❌ [DppProvider] Not found: ${e.message}');
     } catch (e, st) {
       _error = e.toString();
-      _dppModel = null;
+      _processDetail = null;
       debugPrint('❌ [DppProvider] FAILED: $e');
       if (kDebugMode) debugPrint(st.toString());
     } finally {
@@ -84,23 +76,21 @@ class DppProvider extends ChangeNotifier {
     }
   }
 
-  /// Loads an already-decrypted (or locally-seeded) DPP JSON map directly,
-  /// skipping the network call. Used by [AppInitializer] as the demo
-  /// fallback when the app is launched without a real scanned `data`/`iv`
-  /// query pair — e.g. running via `flutter run` during development.
+  /// Loads an already-decrypted DPP JSON map directly, skipping the network
+  /// call. Useful for testing against a pasted sample response.
   void loadFromJson(Map<String, dynamic> json) {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _dppModel = DppResponseModel.fromJson(json);
-    } on DppNotFoundException catch (e) {
+      _processDetail = DppProcessDetailModel.fromJson(json);
+    } on DppProcessDetailException catch (e) {
       _error = e.message;
-      _dppModel = null;
+      _processDetail = null;
     } catch (e) {
       _error = e.toString();
-      _dppModel = null;
+      _processDetail = null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -111,7 +101,7 @@ class DppProvider extends ChangeNotifier {
     _brandId = null;
     _batchId = null;
     _templateId = 2;
-    _dppModel = null;
+    _processDetail = null;
     _error = null;
     _isLoading = false;
     notifyListeners();

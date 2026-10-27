@@ -41,56 +41,6 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
-class EyebrowHeading extends StatelessWidget {
-  final String eyebrow;
-  final String heading; // use \n for <br>
-  final String intro;
-  final bool desktop;
-
-  const EyebrowHeading({
-    super.key,
-    required this.eyebrow,
-    required this.heading,
-    required this.intro,
-    this.desktop = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          eyebrow,
-          style: AppTextStyles.body(
-            size: desktop ? 12 : 11,
-            weight: FontWeight.w800,
-            color: AppColors.eyebrow,
-          ).copyWith(letterSpacing: 1.8),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: (desktop ? 13 : 8).h, bottom: 12.h),
-          child: Text(
-            heading,
-            style: AppTextStyles.display(size: desktop ? 54 : 33, height: 1.08),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(bottom: (desktop ? 28 : 20).h),
-          child: Text(
-            intro,
-            style: AppTextStyles.body(
-              size: desktop ? 16 : 13,
-              color: AppColors.muted,
-              height: desktop ? 1.7 : 1.65,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class DetailList extends StatelessWidget {
   final List<DetailRow> rows;
   final bool desktop;
@@ -320,44 +270,6 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-class FooterNote extends StatelessWidget {
-  final String text;
-  const FooterNote(this.text, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(7.w, 25.h, 7.w, 8.h),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: AppTextStyles.footerNote,
-      ),
-    );
-  }
-}
-
-class DisclaimerText extends StatelessWidget {
-  final String text;
-  final bool desktop;
-  const DisclaimerText(this.text, {super.key, this.desktop = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 15.h),
-      child: Text(
-        text,
-        style: AppTextStyles.body(
-          size: desktop ? 12 : 10,
-          color: AppColors.disclaimer,
-          height: 1.65,
-        ),
-      ),
-    );
-  }
-}
-
 /// Small two-column rows used inside an expandable panel.
 /// Mirrors `.tiny-row` in the source HTML.
 class TinyRowsList extends StatelessWidget {
@@ -498,59 +410,6 @@ class _ExpandableSectionState extends State<ExpandableSection> {
             child: widget.child,
           ),
       ],
-    );
-  }
-}
-
-class NoteBox extends StatelessWidget {
-  final String label;
-  final String text;
-  final bool desktop;
-
-  const NoteBox({
-    super.key,
-    required this.label,
-    required this.text,
-    this.desktop = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(top: 16.h),
-      padding: EdgeInsets.symmetric(
-        horizontal: (desktop ? 20 : 14).w,
-        vertical: (desktop ? 17 : 12).h,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.noteBg,
-        borderRadius: BorderRadius.circular(15.r),
-        border: Border.all(
-          color: AppColors.noteBorder,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: AppTextStyles.body(
-            size: desktop ? 13 : 11,
-            color: AppColors.noteText,
-            height: 1.6,
-          ),
-          children: [
-            TextSpan(
-              text: '$label ',
-              style: AppTextStyles.body(
-                size: desktop ? 13 : 11,
-                color: AppColors.noteText,
-                height: 1.6,
-                weight: FontWeight.w700,
-              ),
-            ),
-            TextSpan(text: text),
-          ],
-        ),
-      ),
     );
   }
 }
