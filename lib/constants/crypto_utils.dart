@@ -5,7 +5,8 @@ import 'package:cryptography/cryptography.dart';
 ///
 /// Used twice in the QR-scan → DPP data flow, both with the same key:
 ///   1. To decrypt the `data`+`iv` query params on the scanned QR URL into
-///      `{BrandID, BatchID, TemplateID}` (see [AppInitializer]).
+///      `{BrandID, BatchID, TemplateID}` (not currently wired into
+///      `main.dart` — see the note there about reconnecting this flow).
 ///   2. To decrypt the `data` field (and `x-iv` response header) of the
 ///      backend's DPP API response into the actual passport JSON
 ///      (see [DppApiService]).

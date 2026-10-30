@@ -3,16 +3,6 @@ import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../constants/crypto_utils.dart';
 
-/// Calls the soft-toys DPP backend with the decrypted `{brandId, batchId}`
-/// pair (lifted from the scanned QR code), then decrypts its response.
-///
-/// Request:  POST [ApiConstants.softToysDppEndpoint]
-///           body: { "brandid": <int>, "batchid": <int> }
-/// Response: { "data": "<base64 AES-GCM ciphertext>" }  +  header "x-iv"
-///           → decrypt → the full DPP JSON envelope:
-///           { "issuccessful": bool,
-///             "data": [ { "o_status": bool, "o_message": string,
-///                         "details": { toy, impact, journey, care, brand } } ] }
 class DppApiService {
   Future<Map<String, dynamic>> fetchDppDecrypted({
     required int brandId,
@@ -20,10 +10,7 @@ class DppApiService {
   }) async {
     const url = ApiConstants.softToysDppEndpoint;
 
-    final body = jsonEncode({
-      'brandid': brandId,
-      'batchid': batchId,
-    });
+    final body = jsonEncode({'brandId': brandId, 'batchId': batchId});
 
     final response = await http.post(
       Uri.parse(url),

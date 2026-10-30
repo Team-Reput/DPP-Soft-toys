@@ -9,9 +9,8 @@ class TabItem {
   const TabItem(this.icon, this.label);
 }
 
-/// Shared tab list for both the mobile bottom bar and the desktop sidebar.
-/// Mirrors the `.tabbar` buttons in the source HTML: Toy · Planet ·
-/// Journey · Care · Brand.
+/// Shared tab list for [AppNavBar]. Mirrors the `.tabbar` buttons in the
+/// source HTML: Toy · Planet · Journey · Care · Brand.
 const List<TabItem> kTabItems = [
   TabItem('🧸', 'Toy'),
   TabItem('🌱', 'Planet'),
@@ -20,19 +19,46 @@ const List<TabItem> kTabItems = [
   TabItem('🌼', 'Brand'),
 ];
 
-/// Mobile bottom navigation bar mirroring `.tabbar`/`.tab` in the source
-/// Mobile HTML.
-class BottomTabBar extends StatelessWidget {
+/// App navigation bar — one widget, two renderings picked by the caller
+/// (`AppNavBar.bottom(...)` or `AppNavBar.side(...)`), replacing the old
+/// separate `BottomTabBar`/`DesktopSideNav` widget classes. [PassportShell]
+/// decides which one to place (bottom pill bar in its mobile Column,
+/// side rail in its desktop Row) from a single top-level breakpoint
+/// check, so there is still only one navigation component to maintain.
+class AppNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final bool _vertical;
 
-  const BottomTabBar({
+  const AppNavBar.bottom({
     super.key,
     required this.currentIndex,
     required this.onTap,
-  });
+  }) : _vertical = false;
+
+  const AppNavBar.side({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  }) : _vertical = true;
 
   static const List<TabItem> items = kTabItems;
+
+  @override
+  Widget build(BuildContext context) {
+    return _vertical
+        ? _SideNav(currentIndex: currentIndex, onTap: onTap)
+        : _BottomBar(currentIndex: currentIndex, onTap: onTap);
+  }
+}
+
+/// Mobile bottom navigation bar mirroring `.tabbar`/`.tab` in the source
+/// Mobile HTML.
+class _BottomBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _BottomBar({required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +67,7 @@ class BottomTabBar extends StatelessWidget {
         // Mirrors the `@media(max-width:359px)` compact-tab rule.
         final compact = constraints.maxWidth < 359;
         return Container(
-          height: 78.h,
+          constraints: BoxConstraints(minHeight: 78.h),
           padding: EdgeInsets.only(
             left: (compact ? 4 : 8).w,
             right: (compact ? 4 : 8).w,
@@ -65,9 +91,9 @@ class BottomTabBar extends StatelessWidget {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(items.length, (i) {
+            children: List.generate(kTabItems.length, (i) {
               final active = i == currentIndex;
-              final item = items[i];
+              final item = kTabItems[i];
               return Expanded(
                 child: Center(
                   child: ConstrainedBox(
@@ -137,6 +163,118 @@ class _TabButton extends StatelessWidget {
                             ? AppTextStyles.tabLabelActive
                             : AppTextStyles.tabLabel)
                         .copyWith(fontSize: (compact ? 9 : 10).sp),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Desktop left sidebar navigation — a fixed-width vertical rail with one
+/// row per tab (icon + label, side by side) and a tagline footer. Mirrors
+/// the desktop `.tabbar`/`.tab` override in the source Desktop HTML
+/// (`grid-column:1`, vertical stack, `::after` tagline).
+class _SideNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _SideNav({required this.currentIndex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 244.w,
+      padding: EdgeInsets.symmetric(vertical: 38.h, horizontal: 20.w),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFFFCF5),
+        border: Border(right: BorderSide(color: Color(0xFFE7DDCF), width: 1)),
+      ),
+      // A Column + Spacer() needs the tab list to fit in whatever's left
+      // after the tagline — on a short window that can still overflow.
+      // Scrolling the tab list (and pinning the tagline below it, outside
+      // the scroll view) means a short window scrolls instead of erroring.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < kTabItems.length; i++) ...[
+                    _SideNavTab(
+                      item: kTabItems[i],
+                      active: i == currentIndex,
+                      onTap: () => onTap(i),
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 5.w, bottom: 0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 180.w),
+              child: Text(
+                '✿  Little things, loved longer.',
+                style: AppTextStyles.display(
+                  size: 15,
+                  weight: FontWeight.w400,
+                  color: const Color(0xFF9A8B77),
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SideNavTab extends StatelessWidget {
+  final TabItem item;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _SideNavTab({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18.r),
+        hoverColor: const Color(0xFFF4EEDF),
+        child: Container(
+          constraints: BoxConstraints(minHeight: 60.h),
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
+          decoration: BoxDecoration(
+            color: active ? AppColors.tabActiveBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+          child: Row(
+            children: [
+              Text(item.icon, style: TextStyle(fontSize: 25.sp)),
+              SizedBox(width: 18.w),
+              Text(
+                item.label,
+                style: AppTextStyles.body(
+                  size: 14,
+                  weight: FontWeight.w800,
+                  color: active
+                      ? const Color(0xFF436447)
+                      : AppColors.tabInactive,
+                ),
               ),
             ],
           ),
