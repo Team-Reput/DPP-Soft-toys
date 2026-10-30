@@ -1,14 +1,7 @@
 import 'package:dpp_soft_toys/app_initializer.dart';
 import 'package:dpp_soft_toys/providers/dpp_provider.dart';
 import 'package:dpp_soft_toys/providers/nav_provider.dart';
-import 'package:dpp_soft_toys/screens/brand_screen.dart';
-import 'package:dpp_soft_toys/screens/care_screen.dart';
-import 'package:dpp_soft_toys/screens/home_screen.dart';
-import 'package:dpp_soft_toys/screens/impact_screen.dart';
-import 'package:dpp_soft_toys/screens/journey_screen.dart';
 import 'package:dpp_soft_toys/theme/app_colors.dart';
-import 'package:dpp_soft_toys/widgets/app_header.dart';
-import 'package:dpp_soft_toys/widgets/bottom_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +29,6 @@ class ForestFriendsApp extends StatelessWidget {
       useInheritedMediaQuery: true,
       builder: (context, child) {
         return MaterialApp(
-          title: 'Forest Friends · Teddy Pet Toy Passport',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
