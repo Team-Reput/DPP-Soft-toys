@@ -55,11 +55,30 @@ class JourneyStop {
   final String title;
   final String description;
   final String place;
+  // Added for the numbered-card Journey redesign.
+  final int index;
+  final String subtitle;
+  final String location;
+  final List<String> chips;
+  // Added for the icon-led "route" row (origin → mode/distance →
+  // destination), replacing the old one-line sentence.
+  final String originLabel;
+  final String destinationLabel;
+  final String transportMode;
+  final String distanceLabel;
   const JourneyStop({
     required this.emoji,
     required this.title,
     required this.description,
     required this.place,
+    this.index = 0,
+    this.subtitle = '',
+    this.location = '',
+    this.chips = const [],
+    this.originLabel = '',
+    this.destinationLabel = '',
+    this.transportMode = '',
+    this.distanceLabel = '',
   });
 }
 

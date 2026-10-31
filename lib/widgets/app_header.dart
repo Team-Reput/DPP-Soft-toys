@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import '../main.dart' show kDesktopBreakpoint;
+import '../providers/dpp_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -10,15 +12,32 @@ import '../theme/app_text_styles.dart';
 /// the full-width bordered bar (`.apphead` override in the source
 /// Desktop HTML) at or above it, so resizing the window re-lays this out
 /// live with no separate mobile/desktop widget classes.
+///
+/// Shown as "`<brand name>` Passport" — built from the REAL
+/// `brand_details.brand_name` from [DppProvider.processDetail], so it
+/// never assumes a species (this app covers any pet product, and plenty
+/// of pets — birds, fish, reptiles — don't have paws). Falls back to the
+/// species-neutral "Pet Passport" only while no data has loaded yet.
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final brandName = context
+        .watch<DppProvider>()
+        .processDetail
+        ?.brandDetails
+        .brandName;
+    final name = (brandName == null || brandName.isEmpty)
+        ? 'Pet Passport'
+        : '$brandName Passport';
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= kDesktopBreakpoint;
-        return isDesktop ? const _AppHeaderDesktop() : const _AppHeaderMobile();
+        return isDesktop
+            ? _AppHeaderDesktop(brandName: name)
+            : _AppHeaderMobile(brandName: name);
       },
     );
   }
@@ -28,12 +47,18 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _AppHeaderMobile extends StatelessWidget {
-  const _AppHeaderMobile();
+  final String brandName;
+  const _AppHeaderMobile({required this.brandName});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(minHeight: 67.h),
+      // A few extra `.h` of floor beyond the nominal 67.h: on narrower/
+      // taller aspect ratios (e.g. 400x748) flutter_screenutil's `.sp`
+      // (text/icon) and `.h` (box) scale factors diverge slightly, so the
+      // Row's natural content can need a touch more than exactly 67.h —
+      // this buffer absorbs that without visibly changing the bar's size.
+      constraints: BoxConstraints(minHeight: 73.h),
       padding: EdgeInsets.fromLTRB(22.w, 14.h, 22.w, 14.h),
       color: AppColors.cream,
       child: Row(
@@ -49,7 +74,7 @@ class _AppHeaderMobile extends StatelessWidget {
                     width: 34.w,
                     height: 34.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEED5AF),
+                      color: AppColors.chipBg,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     alignment: Alignment.center,
@@ -59,7 +84,7 @@ class _AppHeaderMobile extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Flexible(
                   child: Text(
-                    'avanti paws',
+                    brandName,
                     style: AppTextStyles.brand,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -90,7 +115,8 @@ class _AppHeaderMobile extends StatelessWidget {
 }
 
 class _AppHeaderDesktop extends StatelessWidget {
-  const _AppHeaderDesktop();
+  final String brandName;
+  const _AppHeaderDesktop({required this.brandName});
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +124,8 @@ class _AppHeaderDesktop extends StatelessWidget {
       constraints: BoxConstraints(minHeight: 90.h),
       padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 22.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF5),
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFFE7DDCF), width: 1),
-        ),
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -116,8 +140,8 @@ class _AppHeaderDesktop extends StatelessWidget {
                     width: 44.w,
                     height: 44.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE4ECDD),
-                      border: Border.all(color: const Color(0xFFD2DEC8)),
+                      color: AppColors.chipBg,
+                      border: Border.all(color: AppColors.passportBorder),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     alignment: Alignment.center,
@@ -127,7 +151,7 @@ class _AppHeaderDesktop extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Flexible(
                   child: Text(
-                    'avanti paws',
+                    brandName,
                     style: AppTextStyles.display(
                       size: 25,
                       weight: FontWeight.w600,

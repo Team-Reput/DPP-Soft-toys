@@ -34,7 +34,10 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _extractParamsAndFetchDataForDevelopment() async {
     try {
       final uri = Uri.parse(
-        'https://softtoys.reputdev.co.in/?data=XV3RFglFxvUJ%2Fp%2BA7Mf7q6lq64ha%2Fq8oxHl7gcUoL1fxAQyiKNi4aLCyy8D6T%2BCHXKHCuQkuq2moQQ%3D%3D&iv=fC7br7KI62N57jjJ',
+        'https://softtoys.dppreput.com/?data=fdt%2BXgbT6KjRjAOHZz7MGFseLNH%2Bn%2BdgOzpMNS5QY%2FbDZgzz1ALp1l0BGE9ClNMq5NcrZvSM4wqw&iv=%2Fu6qovlDXuhFLJF7'
+        // 'https://softtoys.dppreput.com/?data=WB3s8eMqKMDbR9u%2FHydvAjhRYcbnz9cbe3H%2FQTCHYHY8VLiTRLJCSIIGFNX%2F%2FMTjudSpS61BPW8y&iv=TVyQbhlYb9YKInVX',
+        // 'https://softtoys.reputdev.co.in/?data=YzB%2FYSvLKT2ROc8sgmlRlQXQRnSpLVcR74UeWhcLm%2FbvqiWd%2FH0JqDYk1upNgh9Qs8whY2lzefPBLFI%3D&iv=44FO6OflHt0JeV4Z'
+        // 'https://softtoys.reputdev.co.in/?data=XV3RFglFxvUJ%2Fp%2BA7Mf7q6lq64ha%2Fq8oxHl7gcUoL1fxAQyiKNi4aLCyy8D6T%2BCHXKHCuQkuq2moQQ%3D%3D&iv=fC7br7KI62N57jjJ',
       );
       final encryptedData = uri.queryParameters['data'];
       final iv = uri.queryParameters['iv'];

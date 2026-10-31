@@ -6,5 +6,5 @@ class ApiConstants {
 
   static const String softToysDppEndpoint =
       // 'https://api-dev.reput.world/getToyDppProcessDetail';
-      'https://api-dev.reput.world/getToyDppProcessDetail';
+      'https://api.reput.world/getToyDppProcessDetail';
 }

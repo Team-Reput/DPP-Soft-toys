@@ -163,7 +163,7 @@ class _MetricGrid extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: _bgColors[i % _bgColors.length],
-            border: Border.all(color: const Color(0xFFEEE2D1)),
+            border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(23.r),
           ),
           child: Column(
@@ -239,7 +239,7 @@ class _MetricGridDesktop extends StatelessWidget {
           padding: EdgeInsets.all(24.w),
           decoration: BoxDecoration(
             color: _bgColors[i % _bgColors.length],
-            border: Border.all(color: const Color(0xFFEEE2D1)),
+            border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(25.r),
           ),
           child: Column(
