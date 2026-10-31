@@ -149,23 +149,31 @@ class _HomeContent {
         DetailRow('Age grading', product.ageGradingWarnings),
     ];
 
-    // Every material_details entry, across every process, that has at
-    // least a category or a subtype — the only two keys that happen to be
-    // shared by more than one process's (otherwise heterogeneous) entries.
-    final madeOf = <DetailRow>[];
+    // Every DISTINCT material_category across every process — the only
+    // key that happens to be shared by more than one process's (otherwise
+    // heterogeneous) entries. Several processes can legitimately report
+    // the same category (e.g. "Outer fabric" at both receipt and
+    // cutting); a `Map` keyed on the category collapses those into one
+    // row instead of showing it twice, keeping whichever occurrence
+    // actually has a subtype/composition rather than a later, emptier
+    // repeat shadowing a real value.
+    final madeOfByCategory = <String, String>{};
     for (final p in pd.processes) {
       for (final m in p.materialDetails) {
         final category = m.str('material_category');
         final subtype = m.str('material_subtype_composition');
         if (category.isEmpty && subtype.isEmpty) continue;
-        madeOf.add(
-          DetailRow(
-            category.isEmpty ? 'Material' : category,
-            subtype.isEmpty ? '—' : subtype,
-          ),
-        );
+        final key = category.isEmpty ? 'Material' : category;
+        if (!madeOfByCategory.containsKey(key) ||
+            (madeOfByCategory[key]!.isEmpty && subtype.isNotEmpty)) {
+          madeOfByCategory[key] = subtype;
+        }
       }
     }
+    final madeOf = <DetailRow>[
+      for (final entry in madeOfByCategory.entries)
+        DetailRow(entry.key, entry.value.isEmpty ? '—' : entry.value),
+    ];
 
     // The real product_description field, when the batch has one, is
     // literal API text — preferred over the generated batch-facts sentence
@@ -201,11 +209,11 @@ class _HomeCard extends StatelessWidget {
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: AppColors.paper,
-        border: Border.all(color: const Color(0xFFF2E8D9)),
+        border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x17694E30),
+            color: const Color(0x14101F1C),
             blurRadius: 35,
             offset: Offset(0, 12.h),
           ),
@@ -252,11 +260,11 @@ class _HomeCardDesktop extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 29.w, vertical: 27.h),
       decoration: BoxDecoration(
         color: AppColors.paper,
-        border: Border.all(color: const Color(0xFFF2E8D9)),
+        border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(26.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x17694E30),
+            color: const Color(0x14101F1C),
             blurRadius: 42,
             offset: Offset(0, 16.h),
           ),

@@ -67,7 +67,13 @@ class _BottomBar extends StatelessWidget {
         // Mirrors the `@media(max-width:359px)` compact-tab rule.
         final compact = constraints.maxWidth < 359;
         return Container(
-          constraints: BoxConstraints(minHeight: 78.h),
+          // A few extra `.h` of floor beyond the nominal 78.h, same reason
+          // as `_AppHeaderMobile`'s buffer: on narrower/taller aspect
+          // ratios the icon+label Column's natural content can need a
+          // touch more than exactly 78.h once `.sp` vs `.h` scale factors
+          // diverge, which was the source of the residual (~2px) overflow
+          // in `passport_shell.dart`'s outer Column even after that fix.
+          constraints: BoxConstraints(minHeight: 85.h),
           padding: EdgeInsets.only(
             left: (compact ? 4 : 8).w,
             right: (compact ? 4 : 8).w,
@@ -83,7 +89,7 @@ class _BottomBar extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0x10624B22),
+                color: const Color(0x12101F1C),
                 blurRadius: 26,
                 offset: Offset(0, -10.h),
               ),
@@ -188,8 +194,8 @@ class _SideNav extends StatelessWidget {
       width: 244.w,
       padding: EdgeInsets.symmetric(vertical: 38.h, horizontal: 20.w),
       decoration: const BoxDecoration(
-        color: Color(0xFFFFFCF5),
-        border: Border(right: BorderSide(color: Color(0xFFE7DDCF), width: 1)),
+        color: Colors.white,
+        border: Border(right: BorderSide(color: AppColors.border, width: 1)),
       ),
       // A Column + Spacer() needs the tab list to fit in whatever's left
       // after the tagline — on a short window that can still overflow.
@@ -224,7 +230,7 @@ class _SideNav extends StatelessWidget {
                 style: AppTextStyles.display(
                   size: 15,
                   weight: FontWeight.w400,
-                  color: const Color(0xFF9A8B77),
+                  color: const Color(0xFF7F8B87),
                   height: 1.6,
                 ),
               ),
@@ -254,7 +260,7 @@ class _SideNavTab extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18.r),
-        hoverColor: const Color(0xFFF4EEDF),
+        hoverColor: const Color(0xFFEFF8F6),
         child: Container(
           constraints: BoxConstraints(minHeight: 60.h),
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
@@ -272,7 +278,7 @@ class _SideNavTab extends StatelessWidget {
                   size: 14,
                   weight: FontWeight.w800,
                   color: active
-                      ? const Color(0xFF436447)
+                      ? const Color(0xFF1F5A50)
                       : AppColors.tabInactive,
                 ),
               ),
