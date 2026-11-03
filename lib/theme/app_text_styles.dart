@@ -37,6 +37,25 @@ class AppTextStyles {
     letterSpacing: letterSpacing,
   );
 
+  /// Editorial serif, used only for the Home hero's product name — a
+  /// second, deliberately different typeface from the Fredoka/DM Sans
+  /// pairing used everywhere else, so the product name reads as the one
+  /// "headline" moment on the screen rather than blending into the UI
+  /// chrome around it.
+  static TextStyle serifDisplay({
+    double size = 30,
+    FontWeight weight = FontWeight.w700,
+    Color color = AppColors.ink,
+    double height = 1.12,
+    bool italic = false,
+  }) => GoogleFonts.playfairDisplay(
+    fontSize: size.sp,
+    fontWeight: weight,
+    color: color,
+    height: height,
+    fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+  );
+
   // Common reusable named styles.
   static TextStyle get brand =>
       display(size: 19, weight: FontWeight.w600, height: 1.0);
@@ -48,7 +67,7 @@ class AppTextStyles {
   ).copyWith(letterSpacing: 0.8);
 
   static TextStyle get eyebrow => body(
-    size: 11,
+    size: 12,
     weight: FontWeight.w800,
     color: AppColors.eyebrow,
   ).copyWith(letterSpacing: 1.8);
@@ -64,10 +83,10 @@ class AppTextStyles {
   static TextStyle get cardHeading =>
       display(size: 24, weight: FontWeight.w600);
 
-  static TextStyle get detailLabel => body(size: 12, color: AppColors.muted);
+  static TextStyle get detailLabel => body(size: 13, color: AppColors.muted);
 
   static TextStyle get detailValue =>
-      body(size: 12, weight: FontWeight.w700, color: AppColors.ink);
+      body(size: 13, weight: FontWeight.w700, color: AppColors.ink);
 
   static TextStyle get chip =>
       body(size: 11, weight: FontWeight.w700, color: AppColors.chipText);

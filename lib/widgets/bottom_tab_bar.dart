@@ -4,19 +4,28 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class TabItem {
-  final String icon;
+  final String iconAsset;
   final String label;
-  const TabItem(this.icon, this.label);
+  const TabItem(this.iconAsset, this.label);
 }
 
 /// Shared tab list for [AppNavBar]. Mirrors the `.tabbar` buttons in the
-/// source HTML: Toy · Planet · Journey · Care · Brand.
+/// source HTML: Toy · Journey · Aftercare · Brand. (Planet was removed, and
+/// "Care" was renamed to "Aftercare" — same screen/content, a label that
+/// better covers what's actually on it: wash care, the care & safety
+/// note, retiring the toy, and take-back. Keep this list's order in
+/// lockstep with `_screens` in passport_shell.dart.)
+///
+/// Icons are the real `assets/nav_bar/DPP_Icon_*_Black_512.png` files —
+/// flat black glyphs, tinted at render time via `Image.asset`'s
+/// `color`/`colorBlendMode: BlendMode.srcIn` to whichever ink color the
+/// active/inactive tab state calls for (see `_TabButton`/`_SideNavTab`
+/// below), rather than needing separate pre-colored image assets.
 const List<TabItem> kTabItems = [
-  TabItem('🧸', 'Toy'),
-  TabItem('🌱', 'Planet'),
-  TabItem('🗺️', 'Journey'),
-  TabItem('💗', 'Care'),
-  TabItem('🌼', 'Brand'),
+  TabItem('assets/nav_bar/DPP_Icon_Toy_Black_512.png', 'Toy'),
+  TabItem('assets/nav_bar/DPP_Icon_Journey_Black_512.png', 'Journey'),
+  TabItem('assets/nav_bar/DPP_Icon_Care_Black_512.png', 'Aftercare'),
+  TabItem('assets/nav_bar/DPP_Icon_Brand_Black_512.png', 'Brand'),
 ];
 
 /// App navigation bar — one widget, two renderings picked by the caller
@@ -105,7 +114,7 @@ class _BottomBar extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 100.w),
                     child: _TabButton(
-                      icon: item.icon,
+                      iconAsset: item.iconAsset,
                       label: item.label,
                       active: active,
                       compact: compact,
@@ -123,14 +132,14 @@ class _BottomBar extends StatelessWidget {
 }
 
 class _TabButton extends StatelessWidget {
-  final String icon;
+  final String iconAsset;
   final String label;
   final bool active;
   final bool compact;
   final VoidCallback onTap;
 
   const _TabButton({
-    required this.icon,
+    required this.iconAsset,
     required this.label,
     required this.active,
     required this.onTap,
@@ -139,6 +148,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = (compact ? 20 : 22).w;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -157,9 +167,12 @@ class _TabButton extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                icon,
-                style: TextStyle(fontSize: (compact ? 20 : 22).sp, height: 1.1),
+              Image.asset(
+                iconAsset,
+                width: size,
+                height: size,
+                color: active ? AppColors.tabActiveText : AppColors.tabInactive,
+                colorBlendMode: BlendMode.srcIn,
               ),
               SizedBox(height: 3.h),
               Text(
@@ -270,7 +283,13 @@ class _SideNavTab extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(item.icon, style: TextStyle(fontSize: 25.sp)),
+              Image.asset(
+                item.iconAsset,
+                width: 25.w,
+                height: 25.w,
+                color: active ? const Color(0xFF1F5A50) : AppColors.tabInactive,
+                colorBlendMode: BlendMode.srcIn,
+              ),
               SizedBox(width: 18.w),
               Text(
                 item.label,

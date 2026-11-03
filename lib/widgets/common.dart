@@ -41,6 +41,36 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
+/// Wraps an entire screen's sections in one white, rounded, shadowed
+/// surface instead of each section floating as its own separate card —
+/// one container per screen for a cleaner, more professional look.
+class ScreenCard extends StatelessWidget {
+  final Widget child;
+  final bool desktop;
+  const ScreenCard({super.key, required this.child, this.desktop = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all((desktop ? 36 : 20).w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular((desktop ? 28 : 24).r),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x14101F1C),
+            blurRadius: 28,
+            offset: Offset(0, 10.h),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
 class DetailList extends StatelessWidget {
   final List<DetailRow> rows;
   final bool desktop;
@@ -48,62 +78,63 @@ class DetailList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.paper,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular((desktop ? 22 : 19).r),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: List.generate(rows.length, (i) {
-          final row = rows[i];
-          final isLast = i == rows.length - 1;
-          return Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: (desktop ? 19 : 15).w,
-              vertical: (desktop ? 17 : 13).h,
-            ),
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : const Border(
-                      bottom: BorderSide(
-                        color: AppColors.border,
-                        width: 1,
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    row.label,
-                    style: AppTextStyles.body(
-                      size: desktop ? 14 : 12,
-                      color: AppColors.muted,
+    // No outer border/background any more — this sits directly inside
+    // the screen's one [ScreenCard], so a frame of its own would just be
+    // a box inside a box. Row-to-row divider lines still do the work of
+    // separating entries.
+    return Column(
+      children: List.generate(rows.length, (i) {
+        final row = rows[i];
+        // Defensive: a row with neither a label nor a value isn't real
+        // data — skip it entirely instead of rendering an empty line.
+        if (row.label.isEmpty && row.value.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final isLast = i == rows.length - 1;
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: (desktop ? 19 : 15).w,
+            vertical: (desktop ? 17 : 13).h,
+          ),
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : const Border(
+                    bottom: BorderSide(
+                      color: AppColors.border,
+                      width: 1,
+                      style: BorderStyle.solid,
                     ),
                   ),
-                ),
-                SizedBox(width: 18.w),
-                Flexible(
-                  child: Text(
-                    row.value,
-                    style: AppTextStyles.body(
-                      size: desktop ? 14 : 12,
-                      weight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
-                    textAlign: TextAlign.right,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  row.label,
+                  style: AppTextStyles.body(
+                    size: desktop ? 14 : 12,
+                    color: AppColors.muted,
                   ),
                 ),
-              ],
-            ),
-          );
-        }),
-      ),
+              ),
+              SizedBox(width: 18.w),
+              Flexible(
+                child: Text(
+                  row.value,
+                  style: AppTextStyles.body(
+                    size: desktop ? 14 : 12,
+                    weight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -114,6 +145,7 @@ class ChipsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (chips.isEmpty) return const SizedBox.shrink();
     return Wrap(
       spacing: 7.w,
       runSpacing: 7.h,
@@ -178,28 +210,34 @@ class StoryBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: TextStyle(fontSize: 29.sp)),
-          SizedBox(width: 13.w),
+          emoji.isEmpty
+              ? const SizedBox.shrink()
+              : Text(emoji, style: TextStyle(fontSize: 29.sp)),
+          SizedBox(width: emoji.isEmpty ? 0 : 13.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTextStyles.display(
-                    size: desktop ? 20 : 17,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  text,
-                  style: AppTextStyles.body(
-                    size: desktop ? 14 : 12,
-                    color: AppColors.storyboxText,
-                    height: 1.6,
-                  ),
-                ),
+                title.isEmpty
+                    ? const SizedBox.shrink()
+                    : Text(
+                        title,
+                        style: AppTextStyles.display(
+                          size: desktop ? 20 : 17,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                SizedBox(height: (title.isEmpty || text.isEmpty) ? 0 : 5.h),
+                text.isEmpty
+                    ? const SizedBox.shrink()
+                    : Text(
+                        text,
+                        style: AppTextStyles.body(
+                          size: desktop ? 14 : 12,
+                          color: AppColors.storyboxText,
+                          height: 1.6,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -227,21 +265,22 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // No outer box any more — this sits directly inside the screen's one
+    // [ScreenCard], so it's just a padded block with a hairline divider
+    // on top to separate it from whatever came before, not its own card.
     final card = Container(
       margin: margin ?? EdgeInsets.only(top: 14.h),
       padding: EdgeInsets.symmetric(
-        horizontal: (desktop ? 26 : 17).w,
-        vertical: (desktop ? 23 : 17).h,
+        horizontal: 0,
+        vertical: (desktop ? 20 : 15).h,
       ),
-      decoration: BoxDecoration(
-        color: AppColors.sectionCardBg,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular((desktop ? 23 : 22).r),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
+          if (title != null && title!.isNotEmpty) ...[
             Text(
               title!,
               style: AppTextStyles.display(
@@ -281,6 +320,9 @@ class TinyRowsList extends StatelessWidget {
     return Column(
       children: List.generate(rows.length, (i) {
         final row = rows[i];
+        if (row.label.isEmpty && row.value.isEmpty) {
+          return const SizedBox.shrink();
+        }
         final isLast = i == rows.length - 1;
         return Container(
           padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -326,6 +368,7 @@ class LinkDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (row.url.isEmpty) return const SizedBox.shrink();
     final labelStyle = tiny
         ? AppTextStyles.tinyRowLabel
         : AppTextStyles.detailLabel;

@@ -42,6 +42,14 @@ class CareScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _CareGrid(items: care.items),
+          if (care.careAndRepairText.isNotEmpty)
+            SectionCard(
+              title: 'Care & safety note ⚠️',
+              child: Text(
+                care.careAndRepairText,
+                style: AppTextStyles.sectionCardText,
+              ),
+            ),
           if (care.retireText.isNotEmpty)
             SectionCard(
               title: 'When to retire the toy',
@@ -74,6 +82,13 @@ class CareScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _CareGridDesktop(items: care.items),
+            if (care.careAndRepairText.isNotEmpty)
+              SectionCard(
+                desktop: true,
+                maxWidth: 850.w,
+                title: 'Care & safety note ⚠️',
+                child: Text(care.careAndRepairText),
+              ),
             if (care.retireText.isNotEmpty)
               SectionCard(
                 desktop: true,
@@ -198,6 +213,9 @@ class _CareGridDesktop extends StatelessWidget {
 ///    instruction text (no icon field exists on the real record).
 ///  - `retireText` ← `end_of_life.disposal_instructions`; the "When to
 ///    retire the toy" card is only shown when the batch actually has one.
+///  - `careAndRepairText` ← `end_of_life.care_and_repair_instructions` — a
+///    free-text safety/handling note, shown as its own card right under
+///    the wash-care grid whenever the batch actually has one.
 ///  - `takeBack`/`takeBackLink` ← literal label/value rows (and a link)
 ///    built straight from `end_of_life.takeback_program_status`,
 ///    `can_be_donated_or_reused`, `material_separation_instructions`,
@@ -207,12 +225,14 @@ class _CareGridDesktop extends StatelessWidget {
 class _CareContent {
   final List<CareItem> items;
   final String retireText;
+  final String careAndRepairText;
   final List<DetailRow> takeBack;
   final LinkRow takeBackLink;
 
   const _CareContent({
     required this.items,
     required this.retireText,
+    required this.careAndRepairText,
     required this.takeBack,
     required this.takeBackLink,
   });
@@ -222,6 +242,7 @@ class _CareContent {
       return const _CareContent(
         items: [],
         retireText: '',
+        careAndRepairText: '',
         takeBack: [],
         takeBackLink: LinkRow.empty,
       );
@@ -260,6 +281,7 @@ class _CareContent {
     return _CareContent(
       items: items,
       retireText: eol.disposalInstructions,
+      careAndRepairText: eol.careAndRepairInstructions,
       takeBack: takeBack,
       takeBackLink: takeBackLink,
     );

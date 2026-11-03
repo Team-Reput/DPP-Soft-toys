@@ -157,33 +157,13 @@ class _AppHeaderDesktop extends StatelessWidget {
                       weight: FontWeight.w600,
                       height: 1.0,
                     ).copyWith(letterSpacing: -1.1),
-                    overflow: TextOverflow.ellipsis,
+                    // overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 12.w),
-          Flexible(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(100.r),
-                border: Border.all(color: AppColors.passportBorder, width: 1),
-              ),
-              child: Text(
-                '✦ PET PASSPORT',
-                style: AppTextStyles.body(
-                  size: 11,
-                  weight: FontWeight.w800,
-                  color: AppColors.passportText,
-                ).copyWith(letterSpacing: 0.8),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ],
+      ],
       ),
     );
   }
