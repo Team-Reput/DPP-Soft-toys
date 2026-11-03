@@ -543,6 +543,7 @@ class ProductDetailsModel {
   final String toySizeUnit;
   final String styleCodeSku;
   final String manufacturedBy;
+  final String compositionList;
   final String storyCollection;
   final String countryOfOrigin;
   final String productNameStyle;
@@ -562,6 +563,7 @@ class ProductDetailsModel {
     required this.toySizeUnit,
     required this.styleCodeSku,
     required this.manufacturedBy,
+    required this.compositionList,
     required this.storyCollection,
     required this.countryOfOrigin,
     required this.productNameStyle,
@@ -583,6 +585,7 @@ class ProductDetailsModel {
         toySizeUnit: _s(j, 'toy_size_unit'),
         styleCodeSku: _s(j, 'style_code_sku'),
         manufacturedBy: _s(j, 'manufactured_by'),
+        compositionList: _s(j, 'composition_list'),
         storyCollection: _s(j, 'story_collection'),
         countryOfOrigin: _s(j, 'country_of_origin'),
         productNameStyle: _s(j, 'product_name_style'),

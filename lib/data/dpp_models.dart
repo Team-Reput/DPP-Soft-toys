@@ -66,6 +66,19 @@ class JourneyStop {
   final String destinationLabel;
   final String transportMode;
   final String distanceLabel;
+  // Added for the richer per-process breakdown: water/energy/emissions
+  // pulled straight off this process's own API detail lists. `summaryRows`
+  // is the always-visible single box (transport/water/energy/emissions,
+  // energy already combined into one line) — everything else
+  // (per-energy-source breakdown, waste, the production-detail grid) is
+  // "rest details" shown only inside the card's accordion. Every one of
+  // these is independently optional — an empty list means "this batch has
+  // nothing here" — screens render SizedBox.shrink() for it.
+  final List<TinyRow> summaryRows;
+  final List<TinyRow> waterRows;
+  final List<TinyRow> wasteRows;
+  final List<TinyRow> energyRows;
+  final List<TinyRow> productionRows;
   const JourneyStop({
     required this.emoji,
     required this.title,
@@ -79,6 +92,11 @@ class JourneyStop {
     this.destinationLabel = '',
     this.transportMode = '',
     this.distanceLabel = '',
+    this.summaryRows = const [],
+    this.waterRows = const [],
+    this.wasteRows = const [],
+    this.energyRows = const [],
+    this.productionRows = const [],
   });
 }
 

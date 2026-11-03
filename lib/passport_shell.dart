@@ -2,7 +2,6 @@ import 'package:dpp_soft_toys/main.dart' show kDesktopBreakpoint;
 import 'package:dpp_soft_toys/screens/brand_screen.dart';
 import 'package:dpp_soft_toys/screens/care_screen.dart';
 import 'package:dpp_soft_toys/screens/home_screen.dart';
-import 'package:dpp_soft_toys/screens/impact_screen.dart';
 import 'package:dpp_soft_toys/screens/journey_screen.dart';
 import 'package:dpp_soft_toys/theme/app_colors.dart';
 import 'package:dpp_soft_toys/widgets/app_header.dart';
@@ -20,9 +19,13 @@ class PassportShell extends StatefulWidget {
 class _PassportShellState extends State<PassportShell> {
   int _tabIndex = 0;
 
+  // Planet (ImpactScreen) removed, and the "Care" tab is now labelled
+  // "Aftercare" (same CareScreen widget) — keep this list's order in
+  // lockstep with `kTabItems` in bottom_tab_bar.dart (one screen per tab,
+  // same order), since `IndexedStack`/`AppNavBar` below both index into
+  // them by the same tab index.
   static const List<Widget> _screens = [
     HomeScreen(),
-    ImpactScreen(),
     JourneyScreen(),
     CareScreen(),
     BrandScreen(),
@@ -50,7 +53,6 @@ class _PassportShellState extends State<PassportShell> {
         bottom: false,
         child: Column(
           children: [
-            const AppHeader(),
             Expanded(
               child: IndexedStack(index: _tabIndex, children: _screens),
             ),

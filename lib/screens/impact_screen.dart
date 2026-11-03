@@ -35,44 +35,52 @@ class ImpactScreen extends StatelessWidget {
 
   Widget _buildMobile(_ImpactContent impact) {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(22.w, 24.h, 22.w, 36.h),
-      child: Column(
-        // .stretch: SectionCard below has no explicit width of its own,
-        // so .start would shrink-wrap it instead of filling the
-        // available width.
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _MetricGrid(metrics: impact.metrics),
-          SectionCard(
-            title: '☀️ Where our energy came from',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _RenewableProgressBar(percent: impact.renewableSharePercent),
-                SizedBox(height: 9.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '🌱 Renewable ${impact.renewableSharePercent}%',
-                      style: AppTextStyles.body(
-                        size: 11,
-                        color: AppColors.progressLabel,
-                      ),
+      padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 36.h),
+      child: ScreenCard(
+        child: Column(
+          // .stretch: SectionCard below has no explicit width of its
+          // own, so .start would shrink-wrap it instead of filling the
+          // available width.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            impact.metrics.isEmpty
+                ? const SizedBox.shrink()
+                : _MetricGrid(metrics: impact.metrics),
+            impact.hasEnergyData
+                ? SectionCard(
+                    title: 'Where our energy came from',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _RenewableProgressBar(
+                          percent: impact.renewableSharePercent,
+                        ),
+                        SizedBox(height: 9.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Renewable ${impact.renewableSharePercent}%',
+                              style: AppTextStyles.body(
+                                size: 11,
+                                color: AppColors.progressLabel,
+                              ),
+                            ),
+                            Text(
+                              'Other ${impact.nonRenewableSharePercent}%',
+                              style: AppTextStyles.body(
+                                size: 11,
+                                color: AppColors.progressLabel,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    Text(
-                      'Other ${impact.nonRenewableSharePercent}%',
-                      style: AppTextStyles.body(
-                        size: 11,
-                        color: AppColors.progressLabel,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+                  )
+                : const SizedBox.shrink(),
+          ],
+        ),
       ),
     );
   }
@@ -82,55 +90,65 @@ class ImpactScreen extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 45.h),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 1110.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _MetricGridDesktop(metrics: impact.metrics),
-            SectionCard(
-              desktop: true,
-              title: '☀️ Where our energy came from',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 18.h,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30.r),
-                      child: Container(
-                        color: AppColors.progressTrack,
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: (impact.renewableSharePercent / 100)
-                              .clamp(0.0, 1.0),
-                          child: Container(color: AppColors.progressFill),
-                        ),
+        child: ScreenCard(
+          desktop: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              impact.metrics.isEmpty
+                  ? const SizedBox.shrink()
+                  : _MetricGridDesktop(metrics: impact.metrics),
+              impact.hasEnergyData
+                  ? SectionCard(
+                      desktop: true,
+                      title: 'Where our energy came from',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 18.h,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30.r),
+                              child: Container(
+                                color: AppColors.progressTrack,
+                                child: FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor:
+                                      (impact.renewableSharePercent / 100)
+                                          .clamp(0.0, 1.0),
+                                  child: Container(
+                                    color: AppColors.progressFill,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 9.h),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Renewable ${impact.renewableSharePercent}%',
+                                style: AppTextStyles.body(
+                                  size: 11,
+                                  color: AppColors.progressLabel,
+                                ),
+                              ),
+                              Text(
+                                'Other ${impact.nonRenewableSharePercent}%',
+                                style: AppTextStyles.body(
+                                  size: 11,
+                                  color: AppColors.progressLabel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  SizedBox(height: 9.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '🌱 Renewable ${impact.renewableSharePercent}%',
-                        style: AppTextStyles.body(
-                          size: 11,
-                          color: AppColors.progressLabel,
-                        ),
-                      ),
-                      Text(
-                        'Other ${impact.nonRenewableSharePercent}%',
-                        style: AppTextStyles.body(
-                          size: 11,
-                          color: AppColors.progressLabel,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+                    )
+                  : const SizedBox.shrink(),
+            ],
+          ),
         ),
       ),
     );
@@ -301,11 +319,17 @@ class _ImpactContent {
   final List<MetricItem> metrics;
   final double renewableSharePercent;
   final double nonRenewableSharePercent;
+  // Whether the batch actually reported any energy_details at all — the
+  // "Where our energy came from" card is only meaningful (and only
+  // shown) when this is true, instead of showing a 0%/0% split for a
+  // batch that simply has no energy records.
+  final bool hasEnergyData;
 
   const _ImpactContent({
     required this.metrics,
     required this.renewableSharePercent,
     required this.nonRenewableSharePercent,
+    this.hasEnergyData = false,
   });
 
   factory _ImpactContent.from(DppProcessDetailModel? pd) {
@@ -314,6 +338,7 @@ class _ImpactContent {
         metrics: [],
         renewableSharePercent: 0,
         nonRenewableSharePercent: 0,
+        hasEnergyData: false,
       );
     }
 
@@ -325,19 +350,32 @@ class _ImpactContent {
     String waterUnit = 'L';
     String wasteUnit = 'kg';
     String energyUnit = 'kWh';
+    // Presence flags — a metric is only real when the batch actually has
+    // at least one matching detail entry, not merely when its sum
+    // happens to be non-zero (a genuine 0 reading is still real data).
+    var hasWater = false;
+    var hasWaste = false;
+    var hasEnergy = false;
+    var hasEmission = false;
 
     for (final p in pd.processes) {
       for (final w in p.waterDetails) {
+        hasWater = true;
+        hasEmission = true;
         totalWater += w.waterQuantity;
         totalEmission += w.calculatedEmission;
         if (w.waterQuantityUnit.isNotEmpty) waterUnit = w.waterQuantityUnit;
       }
       for (final w in p.wasteDetails) {
+        hasWaste = true;
+        hasEmission = true;
         totalWaste += w.wasteGenerated;
         totalEmission += w.calculatedEmission;
         if (w.wasteGeneratedUnit.isNotEmpty) wasteUnit = w.wasteGeneratedUnit;
       }
       for (final e in p.energyDetails) {
+        hasEnergy = true;
+        hasEmission = true;
         totalEnergy += e.measuredConsumption;
         totalEmission += e.calculatedEmission;
         if (e.energyUnit.isNotEmpty) energyUnit = e.energyUnit;
@@ -346,12 +384,15 @@ class _ImpactContent {
         }
       }
       for (final t in p.transportationDetails) {
+        hasEmission = true;
         totalEmission += t.calculatedEmission;
       }
       for (final m in p.materialDetails) {
+        hasEmission = true;
         totalEmission += m.calculatedEmission;
       }
       for (final prod in p.productionDetails) {
+        hasEmission = true;
         totalEmission += prod.calculatedEmission;
       }
     }
@@ -365,37 +406,44 @@ class _ImpactContent {
         ? double.parse((100 - renewablePct).toStringAsFixed(1))
         : 0.0;
 
+    // Only the metrics the batch actually has data for — a category with
+    // no real entries is left out entirely rather than shown as "0".
     final metrics = <MetricItem>[
-      MetricItem(
-        icon: '💧',
-        value: _fmt(totalWater),
-        unit: waterUnit,
-        what: 'Water used across production',
-      ),
-      MetricItem(
-        icon: '🗑️',
-        value: _fmt(totalWaste),
-        unit: wasteUnit,
-        what: 'Waste generated across production',
-      ),
-      MetricItem(
-        icon: '⚡',
-        value: _fmt(totalEnergy),
-        unit: energyUnit,
-        what: 'Energy consumed across production',
-      ),
-      MetricItem(
-        icon: '🌫️',
-        value: _fmt(totalEmission),
-        unit: 'kgCO₂e',
-        what: 'Total emissions reported',
-      ),
+      if (hasWater)
+        MetricItem(
+          icon: '💧',
+          value: _fmt(totalWater),
+          unit: waterUnit,
+          what: 'Water used across production',
+        ),
+      if (hasWaste)
+        MetricItem(
+          icon: '🗑️',
+          value: _fmt(totalWaste),
+          unit: wasteUnit,
+          what: 'Waste generated across production',
+        ),
+      if (hasEnergy)
+        MetricItem(
+          icon: '⚡',
+          value: _fmt(totalEnergy),
+          unit: energyUnit,
+          what: 'Energy consumed across production',
+        ),
+      if (hasEmission)
+        MetricItem(
+          icon: '🌫️',
+          value: _fmt(totalEmission),
+          unit: 'kgCO₂e',
+          what: 'Total emissions reported',
+        ),
     ];
 
     return _ImpactContent(
       metrics: metrics,
       renewableSharePercent: renewablePct,
       nonRenewableSharePercent: nonRenewablePct,
+      hasEnergyData: hasEnergy,
     );
   }
 
