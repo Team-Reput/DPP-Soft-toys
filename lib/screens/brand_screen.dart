@@ -143,10 +143,7 @@ class _BrandContent {
             emoji: '🐾',
             title: bd.brandName,
             text:
-                '${bd.brandName} is a '
-                '${bd.status.isEmpty ? "registered" : bd.status.toLowerCase()} '
-                'brand on the Reput DPP network'
-                '${bd.brandCode.isEmpty ? '' : ' (brand code ${bd.brandCode})'}.',
+                ''
           );
 
     final behindTheBrand = <DetailRow>[

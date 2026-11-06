@@ -215,14 +215,6 @@ class _JourneyCard extends StatelessWidget {
                   SizedBox(height: 12.h),
                   _JourneySummaryBox(rows: stop.summaryRows, desktop: desktop),
                 ],
-                // Everything else — the per-energy-source breakdown,
-                // waste, and the production-detail grid — stays behind one
-                // accordion so the card reads at a glance by default.
-                if (stop.energyRows.isNotEmpty ||
-                    stop.wasteRows.isNotEmpty ||
-                    stop.productionRows.isNotEmpty) ...[
-                  SizedBox(height: 10.h),
-                ],
               ],
             ),
           ),
@@ -232,6 +224,9 @@ class _JourneyCard extends StatelessWidget {
   }
 }
 
+/// The always-visible stat box — transport / water / energy / emissions —
+/// rendered as plain label/value rows inside one bordered surface, not as
+/// separate pills or chips.
 class _JourneySummaryBox extends StatelessWidget {
   final List<TinyRow> rows;
   final bool desktop;
@@ -255,6 +250,20 @@ class _JourneySummaryBox extends StatelessWidget {
   }
 }
 
+/// "Show details" accordion — the per-energy-source breakdown, waste, and
+/// the production-detail grid, each its own labelled block, only inside
+// ════════════════════════════════════════════════════════════════════════
+// Per-process data helpers — water/waste/energy pulled straight off the
+// process's own API lists, production-detail rows with the "PO" wording
+// stripped from LABELS only (values are untouched), and a stage emission
+// total summed across every detail list that carries a real
+// `calculated_emission`. Mirrors the HTML prototype's `production_rows()` /
+// `stage_emission_total()` so the Flutter and HTML copies agree.
+// ════════════════════════════════════════════════════════════════════════
+
+/// Thousands-grouped number formatting (no extra package): "950000" → "950,000";
+/// "0.016" stays "0.016" (small emission figures keep up to 3 decimals
+/// instead of being rounded away); whole numbers drop the decimal point.
 String _fmtNum(double v) {
   final isInt = v == v.roundToDouble();
   var fixed = isInt ? v.toInt().toString() : v.toStringAsFixed(3);
@@ -274,127 +283,6 @@ String _fmtNum(double v) {
   return parts.length > 1 ? '$grouped.${parts[1]}' : grouped;
 }
 
-String _fmtDynamic(dynamic v) {
-  if (v is num) return _fmtNum(v.toDouble());
-  if (v is String) {
-    final trimmed = v.trim();
-    final asNum = double.tryParse(trimmed);
-    return asNum != null ? _fmtNum(asNum) : trimmed;
-  }
-  return v?.toString() ?? '';
-}
-
-/// Hand-picked, friendlier English for production-detail keys the generic
-/// humanizer would otherwise read awkwardly. Keyed by the field name with
-/// any "po" word-segment already stripped.
-const Map<String, String> _kProductionLabelOverrides = {
-  'thread_issued': 'Thread issued',
-  'material_composition': 'Material composition',
-  'pieces_embroidered': 'Pieces embroidered',
-  'monthly_thread_consumption': 'Monthly thread consumption',
-  'thread_emissions_per_piece': 'Thread emissions per piece',
-  'thread_consumption_per_piece': 'Thread consumption per piece',
-  'stitch_type': 'Stitch type',
-  'process_involved': 'Process involved',
-  'cut_panels_input': 'Cut panels input',
-  'thread_consumption': 'Thread consumed',
-  'total_sewn_shells_issued': 'Shells sewn',
-  'toys_stuffed': 'Toys stuffed',
-  'filling_material': 'Filling material',
-  'filling_fiber_used': 'Filling fiber used',
-  'outer_fabric_gsm': 'Outer fabric weight (GSM)',
-  'filling_per_piece': 'Filling per piece',
-  'finished_toy_weight': 'Finished toy weight',
-  'pieces_assembled': 'Pieces assembled',
-  'outer_fabric_used_per_piece': 'Outer fabric used per piece',
-  'outer_fabric_filling_composition': 'Outer fabric composition',
-  'rejection_rate': 'Rejection rate',
-  'units_passed': 'Units passed',
-  'units_rejected': 'Units rejected',
-  'units_reworked': 'Units reworked',
-  'units_inspected': 'Units inspected',
-  'number_of_packages': 'Packages produced',
-  'packaging_material': 'Packaging material',
-  'consumption_per_piece': 'Packaging per piece',
-  'monthly_packaging_volume': 'Monthly packaging volume',
-  'finished_product_packed': 'Units packed',
-  'quantity_of_packaging_per': 'Packaging weight used',
-};
-
-/// Drops any "po" word-segment from a `snake_case` key — e.g.
-/// `thread_issued_po` → `thread_issued` — used only to pick a nicer label;
-/// the field's real value is never touched.
-String _stripPoKey(String key) =>
-    key.split('_').where((p) => p.toLowerCase() != 'po').join('_');
-
-String _humanizeKey(String key) {
-  final parts = key.split('_').where((p) => p.toLowerCase() != 'po').toList();
-  if (parts.isEmpty) return '';
-  final label = parts.join(' ');
-  return label[0].toUpperCase() + label.substring(1);
-}
-
-/// Every real, non-empty field in one `production_details` entry — `id`
-/// and `calculated_emission` excluded (shown separately, via the stage
-/// emission total) — as label/value rows, "po" stripped from labels only.
-List<TinyRow> _productionRows(ProcessFieldSet pd) {
-  final raw = pd.raw;
-  final keys = raw.keys.where((k) => k != 'id' && k != 'calculated_emission');
-  final unitKeys = keys.where((k) => k.endsWith('_unit')).toSet();
-  final baseKeys = keys.where((k) => !unitKeys.contains(k));
-  final rows = <TinyRow>[];
-  for (final bk in baseKeys) {
-    final val = raw[bk];
-    if (val == null || val.toString().trim().isEmpty) continue;
-    final unitKey = '${bk}_unit';
-    var unit = raw.containsKey(unitKey) ? (raw[unitKey]?.toString() ?? '') : '';
-    if (bk == 'rejection_rate' && unit.isEmpty) unit = '%';
-    final baseNoPo = _stripPoKey(bk);
-    final label =
-        _kProductionLabelOverrides[baseNoPo] ??
-        _kProductionLabelOverrides[bk] ??
-        _humanizeKey(bk);
-    if (label.isEmpty) continue;
-    final value = '${_fmtDynamic(val)}${unit.isEmpty ? '' : ' $unit'}';
-    rows.add(TinyRow(label, value));
-  }
-  return rows;
-}
-
-List<TinyRow> _waterRows(ProcessModel p) => [
-  for (final w in p.waterDetails)
-    if (w.waterQuantity > 0)
-      TinyRow(
-        w.waterSource.isEmpty ? 'Water used' : w.waterSource,
-        '${_fmtNum(w.waterQuantity)}${w.waterQuantityUnit.isEmpty ? '' : ' ${w.waterQuantityUnit}'}',
-      ),
-];
-
-List<TinyRow> _wasteRows(ProcessModel p) => [
-  for (final w in p.wasteDetails)
-    if (w.wasteGenerated > 0)
-      TinyRow(
-        w.wasteType.isEmpty ? 'Waste generated' : w.wasteType,
-        '${_fmtNum(w.wasteGenerated)}${w.wasteGeneratedUnit.isEmpty ? '' : ' ${w.wasteGeneratedUnit}'}',
-      ),
-];
-
-/// Every energy source this stage reports, each with its measured
-/// consumption AND its own emission — "Add all the emission and show".
-List<TinyRow> _energyRows(ProcessModel p) => [
-  for (final e in p.energyDetails)
-    if (e.measuredConsumption > 0 || e.calculatedEmission > 0)
-      TinyRow(
-        e.energySource.isEmpty ? 'Energy used' : e.energySource,
-        [
-          if (e.measuredConsumption > 0)
-            '${_fmtNum(e.measuredConsumption)}${e.energyUnit.isEmpty ? '' : ' ${e.energyUnit}'}',
-          if (e.calculatedEmission > 0)
-            '${_fmtNum(e.calculatedEmission)} kgCO₂e',
-        ].join(' · '),
-      ),
-];
-
 double _stageWaterTotal(ProcessModel p) =>
     p.waterDetails.fold(0.0, (s, w) => s + w.waterQuantity);
 String _stageWaterUnit(ProcessModel p) =>
@@ -405,12 +293,40 @@ double _stageWasteTotal(ProcessModel p) =>
 String _stageWasteUnit(ProcessModel p) =>
     p.wasteDetails.isNotEmpty ? p.wasteDetails.first.wasteGeneratedUnit : '';
 
+/// A stage's waste, combined into ONE summary row — same idea as
+/// [_energyCombinedRow]. Shown whenever the stage has ANY real waste
+/// record (a type, a quantity, or an emission — never requiring all
+/// three, since a real record like Packaging's "Plastic" waste can carry
+/// only a type + emission with no quantity). The value prefers the
+/// summed quantity when there is one, falling back to the combined
+/// emission, so the row is never blank when there's real data to show —
+/// and this returns null (no row at all) only when the stage truly has
+/// no waste records, matching the SizedBox.shrink() convention used
+/// everywhere else on this screen.
+TinyRow? _wasteCombinedRow(ProcessModel p) {
+  if (p.wasteDetails.isEmpty) return null;
+  final types = <String>{
+    for (final w in p.wasteDetails)
+      if (w.wasteType.isNotEmpty) w.wasteType,
+  };
+  final quantityTotal = _stageWasteTotal(p);
+  final emissionTotal = p.wasteDetails.fold(
+    0.0,
+    (s, w) => s + w.calculatedEmission,
+  );
+  if (types.isEmpty && quantityTotal <= 0 && emissionTotal <= 0) return null;
+  final label = types.isEmpty ? 'Waste' : types.join(' + ');
+  final unit = _stageWasteUnit(p);
+  final value = quantityTotal > 0
+      ? '${_fmtNum(quantityTotal)}${unit.isEmpty ? '' : ' $unit'}'
+      : (emissionTotal > 0 ? '${_fmtNum(emissionTotal)} kgCO₂e' : '—');
+  return TinyRow(label, value);
+}
+
 /// All of a stage's energy sources combined into ONE row — every source's
 /// emission added together, and the sources themselves named in the
 /// label (mixed units like kWh + L can't be summed into one quantity, so
-/// the value carries the combined emission instead). The full per-source
-/// breakdown still lives in `_energyRows`, just moved behind the
-/// accordion rather than repeated here.
+/// the value carries the combined emission instead).
 TinyRow? _energyCombinedRow(ProcessModel p) {
   if (p.energyDetails.isEmpty) return null;
   final sources = <String>{
@@ -429,24 +345,15 @@ TinyRow? _energyCombinedRow(ProcessModel p) {
   return TinyRow(label, value);
 }
 
-/// The single always-visible box: transport (stage 1 only, in the sample
-/// data), water, energy (already combined), and the stage's total
-/// emissions — in that order, each row only appearing when this stage
-/// actually has that figure.
-List<TinyRow> _summaryRows(
-  ProcessModel p, {
-  required String transportMode,
-  required String distanceLabel,
-}) {
+/// The single always-visible box, in this fixed order: energy (combined),
+/// water, waste (combined), then the stage's total emissions — each row
+/// only appearing when this stage actually has that figure (e.g. no waste
+/// record at all → [_wasteCombinedRow] returns null → no row, rather than
+/// a blank/broken line).
+List<TinyRow> _summaryRows(ProcessModel p) {
   final rows = <TinyRow>[];
-  if (transportMode.isNotEmpty || distanceLabel.isNotEmpty) {
-    rows.add(
-      TinyRow(
-        'Transport',
-        [transportMode, distanceLabel].where((s) => s.isNotEmpty).join(' · '),
-      ),
-    );
-  }
+  final energyRow = _energyCombinedRow(p);
+  if (energyRow != null) rows.add(energyRow);
   final waterTotal = _stageWaterTotal(p);
   if (waterTotal > 0) {
     final unit = _stageWaterUnit(p);
@@ -454,8 +361,8 @@ List<TinyRow> _summaryRows(
       TinyRow('Water', '${_fmtNum(waterTotal)}${unit.isEmpty ? '' : ' $unit'}'),
     );
   }
-  final energyRow = _energyCombinedRow(p);
-  if (energyRow != null) rows.add(energyRow);
+  final wasteRow = _wasteCombinedRow(p);
+  if (wasteRow != null) rows.add(wasteRow);
   final emissionTotal = _stageEmissionTotal(p);
   if (emissionTotal > 0) {
     rows.add(TinyRow('Emissions', '${_fmtNum(emissionTotal)} kgCO₂e'));
@@ -504,13 +411,23 @@ class _JourneyContent {
       if (process == null) continue;
       i++;
 
-      final t = process.transportationDetails.isNotEmpty
-          ? process.transportationDetails.first
-          : null;
-      final place = t == null
+      // A stage can report more than one transportation leg (e.g. an
+      // overseas leg into the country, then a domestic leg to the
+      // facility) — every leg is kept, not just the first. `place` and
+      // the header's "📍 location" line use the LAST leg's destination:
+      // wherever the shipment actually ends up after every hop.
+      final legs = process.transportationDetails;
+      final lastLeg = legs.isNotEmpty ? legs.last : null;
+      final firstLeg = legs.isNotEmpty ? legs.first : null;
+      final place = firstLeg == null
           ? ''
-          : '${t.originFrom} → ${t.destinationTo}'
-                '${t.transportMode.isEmpty ? '' : ' · ${t.transportMode}'}';
+          : legs
+                .map(
+                  (t) =>
+                      '${t.originFrom} → ${t.destinationTo}'
+                      '${t.transportMode.isEmpty ? '' : ' · ${t.transportMode}'}',
+                )
+                .join('; ');
 
       // Subtitle: the first material entry with a category/subtype — same
       // aggregation the Home tab's "What am I made of?" uses.
@@ -524,18 +441,6 @@ class _JourneyContent {
         }
       }
 
-      // Transport mode/distance feed into the summary box's "Transport"
-      // row (see `_summaryRows` below); destination is shown separately,
-      // as the "📍 location" line under the process name. Both come from
-      // this process's own transportation record — any missing piece is
-      // just left out.
-      final distanceStr = (t != null && t.distanceTravelled > 0)
-          ? '${t.distanceTravelled.toStringAsFixed(t.distanceTravelled % 1 == 0 ? 0 : 1)} ${t.distanceUnit.isEmpty ? 'km' : t.distanceUnit}'
-          : '';
-
-      final productionDetails = process.productionDetails;
-      final transportModeVal = t?.transportMode ?? '';
-
       stops.add(
         JourneyStop(
           emoji: stage.emoji,
@@ -545,20 +450,9 @@ class _JourneyContent {
           index: i,
           subtitle: subtitle,
           // originLabel: pd.batch.manufacturingFacility,
-          destinationLabel: t?.destinationTo ?? '',
-          transportMode: transportModeVal,
-          distanceLabel: distanceStr,
-          summaryRows: _summaryRows(
-            process,
-            transportMode: transportModeVal,
-            distanceLabel: distanceStr,
-          ),
-          waterRows: _waterRows(process),
-          wasteRows: _wasteRows(process),
-          energyRows: _energyRows(process),
-          productionRows: productionDetails.isNotEmpty
-              ? _productionRows(productionDetails.first)
-              : const [],
+          destinationLabel: lastLeg?.destinationTo ?? '',
+          transportMode: lastLeg?.transportMode ?? '',
+          summaryRows: _summaryRows(process),
         ),
       );
     }
