@@ -9,17 +9,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common.dart';
 
-/// "Toy" tab — single responsive screen. A [LayoutBuilder] picks the
-/// mobile layout below [kDesktopBreakpoint] and the wider desktop layout
-/// at or above it — so resizing the window (e.g. on web/desktop) re-lays
-/// the same screen out live, with no separate mobile/desktop widget
-/// classes.
-///
-/// Every section renders only real data: there is no decorative hero or
-/// marketing copy here any more, only the batch/process/end-of-life
-/// values pulled from the REAL [DppProvider.processDetail] by
-/// [_HomeContent.from] — see that class for exactly which field backs
-/// which section.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -41,19 +30,16 @@ class HomeScreen extends StatelessWidget {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(22.w, 24.h, 22.w, 36.h),
       child: Column(
-        // .stretch: _HomeCard/DetailList/SectionCard/StoryBox below have
-        // no explicit width of their own, so .start would shrink-wrap
-        // them instead of filling the available width.
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (content.hasHero) _HomeHero(content: content),
           if (content.madeOf.isNotEmpty) ...[
             const SectionTitle('What am I made of? 🧵'),
-            DetailList(content.madeOf),
+            _HomeDetailRows(rows: content.madeOf),
           ],
           if (content.passportFacts.isNotEmpty) ...[
             const SectionTitle('My little passport 📖'),
-            DetailList(content.passportFacts),
+            _HomeDetailRows(rows: content.passportFacts),
           ],
         ],
       ),
@@ -71,11 +57,11 @@ class HomeScreen extends StatelessWidget {
             if (content.hasHero) _HomeHero(content: content, desktop: true),
             if (content.madeOf.isNotEmpty) ...[
               SectionTitle('What am I made of? 🧵', desktop: true),
-              DetailList(content.madeOf, desktop: true),
+              _HomeDetailRows(rows: content.madeOf, desktop: true),
             ],
             if (content.passportFacts.isNotEmpty) ...[
               SectionTitle('My little passport 📖', desktop: true),
-              DetailList(content.passportFacts, desktop: true),
+              _HomeDetailRows(rows: content.passportFacts, desktop: true),
             ],
           ],
         ),
@@ -84,41 +70,78 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Translates the REAL [DppProcessDetailModel] into the UI shapes the
-/// widgets above already know how to render ([ChipItem]/[DetailRow]/
-/// [TinyRow]/[LinkRow]/[StoryBoxContent], all from `dpp_models.dart`), plus
-/// a small set of hero-only strings consumed directly by [_HomeHero]. Kept
-/// local to this screen — the data layer (`dpp_process_models.dart`) stays
-/// free of any UI-shape opinions; this is purely a view-model.
-///
-/// Field mapping (confirmed with product owner 2026-10-26):
-///  - `passportFacts`  ← `product_details`: product/style name, story
-///    collection, category, composition, size (dimensions + unit),
-///    country of origin, manufactured by, SKU, age grading.
-///  - `productImage`   ← `product_details.product_image` — a real product
-///    photo, shown when the batch's record actually has one.
-///  - `madeOf`         ← every process's `material_details`: the only key
-///    common to every entry is `material_category`; paired with
-///    `material_subtype_composition` when a given entry also has it.
-///  - `heroEyebrow`    ← `product_category_type`, falling back to
-///    `story_collection` — whichever short real tag the batch actually has.
-///  - `heroTitleMain` / `heroTitleAccent` ← both derived from the SAME real
-///    `product_description` field. When it literally ends with
-///    `product_name_style` (e.g. description "Velvet Treater Cake" ending
-///    in style "Cake"), that trailing real word/phrase is split off as
-///    `heroTitleAccent` so it can be styled as the one highlighted word —
-///    no text is invented, it's the same API string, just split in two.
-///    When there's no such match, the whole description is `heroTitleMain`
-///    and `heroTitleAccent` is empty (no highlight is forced).
-///  - `heroByline`     ← `manufactured_by`.
-///  - `heroStyleCode` / `heroComposition` ← `style_code_sku` /
-///    `composition_list`, shown as two compact rows under the hero title.
+/// Same row/divider layout as the shared [DetailList] (also used by Care),
+/// but with solid black label/value text, 3pt larger than `DetailList`'s
+/// own sizes (12/14 → 15/17) — just the font change requested for this
+/// screen, with no extra container/shadow this time. Kept local rather
+/// than touching `DetailList` itself, since Care uses that widget's plain
+/// look unchanged.
+class _HomeDetailRows extends StatelessWidget {
+  final List<DetailRow> rows;
+  final bool desktop;
+  const _HomeDetailRows({required this.rows, this.desktop = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = (desktop ? 17 : 15).sp;
+    return Column(
+      children: List.generate(rows.length, (i) {
+        final row = rows[i];
+        if (row.label.isEmpty && row.value.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final isLast = i == rows.length - 1;
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: (desktop ? 19 : 15).w,
+            vertical: (desktop ? 17 : 13).h,
+          ),
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : const Border(
+                    bottom: BorderSide(
+                      color: AppColors.border,
+                      width: 1,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  row.label,
+                  style: TextStyle(fontSize: fontSize, color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 18.w),
+              Flexible(
+                child: Text(
+                  row.value,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
 class _HomeContent {
   final String productImage;
   final String heroEyebrow;
   final String heroTitleMain;
   final String heroTitleAccent;
-  final String heroByline;
+  final String brandName;
   final String heroStyleCode;
   final String heroComposition;
   final List<DetailRow> madeOf;
@@ -129,15 +152,13 @@ class _HomeContent {
     required this.heroEyebrow,
     required this.heroTitleMain,
     required this.heroTitleAccent,
-    required this.heroByline,
+    required this.brandName,
     required this.heroStyleCode,
     required this.heroComposition,
     required this.madeOf,
     required this.passportFacts,
   });
 
-  /// True when there's enough real data for the hero to be worth showing
-  /// at all (an image, or at least a title).
   bool get hasHero =>
       productImage.isNotEmpty ||
       heroTitleMain.isNotEmpty ||
@@ -150,7 +171,7 @@ class _HomeContent {
       heroEyebrow = '',
       heroTitleMain = '',
       heroTitleAccent = '',
-      heroByline = '',
+      brandName = '',
       heroStyleCode = '',
       heroComposition = '',
       madeOf = const [],
@@ -161,10 +182,8 @@ class _HomeContent {
 
     final batch = pd.batch;
     final product = pd.productDetails;
+    final brand = pd.brandDetails;
 
-    // Size: dimensions + unit are two separate API fields, combined into
-    // one row only when the batch actually reports a dimension (a unit
-    // with no number isn't a real size).
     final sizeValue = product.toySizeDimensions > 0
         ? '${product.toySizeDimensions == product.toySizeDimensions.roundToDouble() ? product.toySizeDimensions.toInt() : product.toySizeDimensions}'
               '${product.toySizeUnit.isEmpty ? '' : ' ${product.toySizeUnit}'}'
@@ -175,32 +194,17 @@ class _HomeContent {
         : batch.productNameStyle;
 
     final passportFacts = <DetailRow>[
-      if (productName.isNotEmpty) DetailRow('Product', productName),
       if (product.storyCollection.isNotEmpty)
         DetailRow('Collection', product.storyCollection),
       if (product.productCategoryType.isNotEmpty)
         DetailRow('Category', product.productCategoryType),
-      if (product.compositionList.isNotEmpty)
-        DetailRow('Composition', product.compositionList),
       if (sizeValue.isNotEmpty) DetailRow('Size', sizeValue),
       if (product.countryOfOrigin.isNotEmpty)
         DetailRow('Country of origin', product.countryOfOrigin),
       if (product.manufacturedBy.isNotEmpty)
         DetailRow('Manufactured by', product.manufacturedBy),
-      if (product.styleCodeSku.isNotEmpty)
-        DetailRow('SKU', product.styleCodeSku),
-      if (product.ageGradingWarnings.isNotEmpty)
-        DetailRow('Age grading', product.ageGradingWarnings),
     ];
 
-    // Every DISTINCT material_category across every process — the only
-    // key that happens to be shared by more than one process's (otherwise
-    // heterogeneous) entries. Several processes can legitimately report
-    // the same category (e.g. "Outer fabric" at both receipt and
-    // cutting); a `Map` keyed on the category collapses those into one
-    // row instead of showing it twice, keeping whichever occurrence
-    // actually has a subtype/composition rather than a later, emptier
-    // repeat shadowing a real value.
     final madeOfByCategory = <String, String>{};
     for (final p in pd.processes) {
       for (final m in p.materialDetails) {
@@ -263,7 +267,7 @@ class _HomeContent {
       heroEyebrow: heroEyebrow,
       heroTitleMain: titleMain,
       heroTitleAccent: titleAccent,
-      heroByline: product.manufacturedBy,
+      brandName: brand.brandName.isNotEmpty ? brand.brandName : brand.brandName,
       heroStyleCode: product.styleCodeSku,
       heroComposition: product.compositionList,
       madeOf: madeOf,
@@ -272,12 +276,6 @@ class _HomeContent {
   }
 }
 
-/// The hero — a full-width teal image panel topped by an overlapping
-/// white "bottom sheet" card (drag handle, eyebrow label, serif title
-/// with one real highlighted word, byline, divider, a couple of compact
-/// detail rows). One widget, two sizes — picked by the `desktop` flag —
-/// rather than separate mobile/desktop classes, since only the
-/// dimensions differ, not the structure.
 class _HomeHero extends StatelessWidget {
   final _HomeContent content;
   final bool desktop;
@@ -287,13 +285,7 @@ class _HomeHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final heroHeight = desktop ? 300.h : 230.h;
     final radius = desktop ? 26.r : 22.r;
-
-    // No more overlap/negative-offset trick for the sheet: the image
-    // panel and the white sheet are just two plain, adjacent Column
-    // children sharing one outer ClipRRect (so the whole card still reads
-    // as one rounded unit, image on top, sheet below) — simple, and with
-    // no risk of a mystery gap from a layout box that doesn't match what
-    // was actually painted.
+    print('Brand name: ${content.brandName}');
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Container(
@@ -319,9 +311,6 @@ class _HomeHero extends StatelessWidget {
                   padding: EdgeInsets.all(20.w),
                   child: Image.network(
                     content.productImage,
-                    // .contain, not .cover/.fill — the real product photo
-                    // shows whole and undistorted on the teal background
-                    // instead of being cropped or stretched.
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
@@ -367,7 +356,7 @@ class _HomeHero extends StatelessWidget {
                         ],
                       ),
                     ),
-                  if (content.heroByline.isNotEmpty) ...[
+                  if (content.brandName.isNotEmpty) ...[
                     SizedBox(height: 8.h),
                     Row(
                       children: [
@@ -380,9 +369,11 @@ class _HomeHero extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
+
                         Expanded(
                           child: Text(
-                            'by ${content.heroByline}',
+                            'by ${content.brandName}',
+
                             style: AppTextStyles.body(
                               size: 14,
                               weight: FontWeight.w600,

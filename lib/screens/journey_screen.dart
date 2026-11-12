@@ -196,6 +196,21 @@ class _JourneyCard extends StatelessWidget {
                     ],
                   ),
                 ],
+                // Transport mode(s) this stage's leg(s) actually report —
+                // e.g. "Sea, Road" for a stage with more than one leg —
+                // shown right under the location line, not inside the
+                // stat box below.
+                if (stop.transportMode.isNotEmpty) ...[
+                  SizedBox(height: 3.h),
+                  Text(
+                    'By ${stop.transportMode}',
+                    style: AppTextStyles.body(
+                      size: desktop ? 13 : 12,
+                      weight: FontWeight.w600,
+                      color: AppColors.journeyLocationText,
+                    ),
+                  ),
+                ],
                 if (stop.subtitle.isNotEmpty) ...[
                   SizedBox(height: 3.h),
                   Text(
@@ -245,7 +260,68 @@ class _JourneySummaryBox extends StatelessWidget {
         border: Border.all(color: AppColors.noteBorder),
         borderRadius: BorderRadius.circular(16.r),
       ),
-      child: TinyRowsList(rows),
+      child: _JourneyStatRows(rows),
+    );
+  }
+}
+
+/// A Journey-screen-only variant of the shared [TinyRowsList] — same
+/// row/divider layout, but solid black label & value text, 3pt larger
+/// than the shared `tinyRowLabel`/`tinyRowValue` styles (11 → 14), as
+/// requested for this screen specifically. Deliberately local rather
+/// than changing `TinyRowsList`/`AppTextStyles.tinyRowLabel`/
+/// `tinyRowValue` themselves, since those are shared with the Brand
+/// screen's certificate rows, which this request doesn't touch.
+class _JourneyStatRows extends StatelessWidget {
+  final List<TinyRow> rows;
+  const _JourneyStatRows(this.rows);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(rows.length, (i) {
+        final row = rows[i];
+        if (row.label.isEmpty && row.value.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final isLast = i == rows.length - 1;
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : const Border(
+                    bottom: BorderSide(
+                      color: AppColors.tinyRowBorder,
+                      width: 1,
+                    ),
+                  ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  row.label,
+                  style: AppTextStyles.body(size: 14, color: Colors.black),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Flexible(
+                child: Text(
+                  row.value,
+                  style: AppTextStyles.body(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -305,22 +381,35 @@ String _stageWasteUnit(ProcessModel p) =>
 /// everywhere else on this screen.
 TinyRow? _wasteCombinedRow(ProcessModel p) {
   if (p.wasteDetails.isEmpty) return null;
-  final types = <String>{
-    for (final w in p.wasteDetails)
-      if (w.wasteType.isNotEmpty) w.wasteType,
-  };
+  final hasType = p.wasteDetails.any((w) => w.wasteType.isNotEmpty);
   final quantityTotal = _stageWasteTotal(p);
   final emissionTotal = p.wasteDetails.fold(
     0.0,
     (s, w) => s + w.calculatedEmission,
   );
-  if (types.isEmpty && quantityTotal <= 0 && emissionTotal <= 0) return null;
-  final label = types.isEmpty ? 'Waste' : types.join(' + ');
+  if (!hasType && quantityTotal <= 0 && emissionTotal <= 0) return null;
+  // Always labelled plainly "Waste" — e.g. a Packaging-stage record typed
+  // "Plastic" is still shown under "Waste", not its raw type name.
   final unit = _stageWasteUnit(p);
   final value = quantityTotal > 0
       ? '${_fmtNum(quantityTotal)}${unit.isEmpty ? '' : ' $unit'}'
       : (emissionTotal > 0 ? '${_fmtNum(emissionTotal)} kgCO₂e' : '—');
-  return TinyRow(label, value);
+  return TinyRow('Waste', value);
+}
+
+/// Every transportation leg this stage reports, combined into one
+/// "Transport Emission" row — every leg's `calculated_emission` summed
+/// together (e.g. the Raw Material stage's Sea + Road legs). The modes
+/// themselves (Sea, Road, ...) are shown separately, just under the
+/// stage's location line, not repeated here.
+TinyRow? _transportEmissionRow(ProcessModel p) {
+  if (p.transportationDetails.isEmpty) return null;
+  final total = p.transportationDetails.fold(
+    0.0,
+    (s, t) => s + t.calculatedEmission,
+  );
+  if (total <= 0) return null;
+  return TinyRow('Transport Emission', '${_fmtNum(total)} kgCO₂e');
 }
 
 /// All of a stage's energy sources combined into ONE row — every source's
@@ -358,14 +447,19 @@ List<TinyRow> _summaryRows(ProcessModel p) {
   if (waterTotal > 0) {
     final unit = _stageWaterUnit(p);
     rows.add(
-      TinyRow('Water', '${_fmtNum(waterTotal)}${unit.isEmpty ? '' : ' $unit'}'),
+      TinyRow(
+        'Water Consumption',
+        '${_fmtNum(waterTotal)}${unit.isEmpty ? '' : ' $unit'}',
+      ),
     );
   }
+  final transportRow = _transportEmissionRow(p);
+  if (transportRow != null) rows.add(transportRow);
   final wasteRow = _wasteCombinedRow(p);
   if (wasteRow != null) rows.add(wasteRow);
   final emissionTotal = _stageEmissionTotal(p);
   if (emissionTotal > 0) {
-    rows.add(TinyRow('Emissions', '${_fmtNum(emissionTotal)} kgCO₂e'));
+    rows.add(TinyRow('Carbon Emission', '${_fmtNum(emissionTotal)} kgCO₂e'));
   }
   return rows;
 }
@@ -429,6 +523,16 @@ class _JourneyContent {
                 )
                 .join('; ');
 
+      // Every distinct mode this stage's leg(s) use (e.g. "Sea, Road" for
+      // a stage with an overseas + a domestic leg) — shown under the
+      // location line, separately from the combined emission figure in
+      // the stat box.
+      final modes = <String>{
+        for (final t in legs)
+          if (t.transportMode.isNotEmpty) t.transportMode,
+      };
+      final modesLabel = modes.join(', ');
+
       // Subtitle: the first material entry with a category/subtype — same
       // aggregation the Home tab's "What am I made of?" uses.
       var subtitle = '';
@@ -451,7 +555,7 @@ class _JourneyContent {
           subtitle: subtitle,
           // originLabel: pd.batch.manufacturingFacility,
           destinationLabel: lastLeg?.destinationTo ?? '',
-          transportMode: lastLeg?.transportMode ?? '',
+          transportMode: modesLabel,
           summaryRows: _summaryRows(process),
         ),
       );

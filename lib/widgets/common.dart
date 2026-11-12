@@ -139,6 +139,89 @@ class DetailList extends StatelessWidget {
   }
 }
 
+/// A big, shadowed card variant of [DetailList] — same label/value rows,
+/// but solid black text 3pt larger than `DetailList`'s own sizes (12/14 →
+/// 15/17), sitting inside its own bordered, drop-shadowed surface instead
+/// of plain unboxed rows. Used where a section specifically asks for this
+/// heavier look (Brand's "Behind the brand", Home's "What am I made of?"
+/// and "My little passport") rather than changing `DetailList` itself,
+/// since other screens (Care) use that widget's plain look unchanged.
+class BigDetailCard extends StatelessWidget {
+  final List<DetailRow> rows;
+  final bool desktop;
+  const BigDetailCard({super.key, required this.rows, this.desktop = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final fontSize = (desktop ? 17 : 15).sp;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: (desktop ? 24 : 18).w,
+        vertical: (desktop ? 8 : 6).h,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular((desktop ? 28 : 22).r),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x14101F1C),
+            blurRadius: 24,
+            offset: Offset(0, 8.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(rows.length, (i) {
+          final row = rows[i];
+          if (row.label.isEmpty && row.value.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          final isLast = i == rows.length - 1;
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: (desktop ? 17 : 13).h),
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : const Border(
+                      bottom: BorderSide(color: AppColors.border, width: 1),
+                    ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    row.label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 18.w),
+                Flexible(
+                  child: Text(
+                    row.value,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
 class ChipsRow extends StatelessWidget {
   final List<ChipItem> chips;
   const ChipsRow(this.chips, {super.key});
@@ -170,6 +253,9 @@ class StoryBox extends StatelessWidget {
   final String title;
   final String text;
   final bool desktop;
+  // A real logo image asset — takes priority over [emoji] when set (see
+  // [StoryBoxContent.imageAsset]).
+  final String imageAsset;
 
   const StoryBox({
     super.key,
@@ -177,6 +263,7 @@ class StoryBox extends StatelessWidget {
     required this.title,
     required this.text,
     this.desktop = false,
+    this.imageAsset = '',
   });
 
   factory StoryBox.fromContent(
@@ -190,11 +277,13 @@ class StoryBox extends StatelessWidget {
       title: content.title,
       text: content.text,
       desktop: desktop,
+      imageAsset: content.imageAsset,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final logoSize = (desktop ? 56 : 48).w;
     return Container(
       constraints: desktop ? BoxConstraints(maxWidth: 850.w) : null,
       padding: EdgeInsets.fromLTRB(
@@ -210,10 +299,21 @@ class StoryBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          emoji.isEmpty
-              ? const SizedBox.shrink()
-              : Text(emoji, style: TextStyle(fontSize: 29.sp)),
-          SizedBox(width: emoji.isEmpty ? 0 : 13.w),
+          if (imageAsset.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: Image.asset(
+                imageAsset,
+                width: logoSize,
+                height: logoSize,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            emoji.isEmpty
+                ? const SizedBox.shrink()
+                : Text(emoji, style: TextStyle(fontSize: 29.sp)),
+          SizedBox(width: (imageAsset.isEmpty && emoji.isEmpty) ? 0 : 13.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

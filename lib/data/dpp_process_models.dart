@@ -487,10 +487,6 @@ class EndOfLifeModel {
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// BRAND DETAILS — `data.brand_details`
-// ════════════════════════════════════════════════════════════════════════
-
 class BrandDetailsModel {
   final String status;
   final int brandId;
@@ -621,11 +617,6 @@ class DppProcessDetailModel {
     required this.productDetails,
   });
 
-  /// [json] is the full decrypted map:
-  ///   { "issuccessful": bool, "message": string,
-  ///     "data": { "batch", "processes", "wash_care", "end_of_life",
-  ///               "brand_details", "product_details" } }
-  /// Throws [DppProcessDetailException] when `issuccessful` is `false`.
   factory DppProcessDetailModel.fromJson(Map<String, dynamic> json) {
     final ok = _b(json, 'issuccessful', true);
     final message = _s(json, 'message');
