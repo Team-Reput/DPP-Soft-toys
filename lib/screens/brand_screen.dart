@@ -48,7 +48,7 @@ class BrandScreen extends StatelessWidget {
             StoryBox.fromContent(brand.story),
           if (brand.behindTheBrand.isNotEmpty) ...[
             const SectionTitle('Behind the brand ✿'),
-            DetailList(brand.behindTheBrand),
+            _BehindTheBrandCard(rows: brand.behindTheBrand),
           ],
           if (brand.certifications.isNotEmpty) ...[
             const SectionTitle('Certificates & records 📜'),
@@ -74,7 +74,7 @@ class BrandScreen extends StatelessWidget {
               StoryBox.fromContent(brand.story, desktop: true),
             if (brand.behindTheBrand.isNotEmpty) ...[
               SectionTitle('Behind the brand ✿', desktop: true),
-              DetailList(brand.behindTheBrand, desktop: true),
+              _BehindTheBrandCard(rows: brand.behindTheBrand, desktop: true),
             ],
             if (brand.certifications.isNotEmpty) ...[
               SectionTitle('Certificates & records 📜', desktop: true),
@@ -140,10 +140,11 @@ class _BrandContent {
     final story = bd.brandName.isEmpty
         ? StoryBoxContent.empty
         : StoryBoxContent(
-            emoji: '🐾',
+            emoji: '',
+            imageAsset: 'assets/brand_logo.jpg',
             title: bd.brandName,
             text:
-                ''
+                '',
           );
 
     final behindTheBrand = <DetailRow>[
@@ -199,6 +200,88 @@ class _BrandContent {
   }
 }
 
+/// The "Behind the brand" section, lifted off the plain row-list look
+/// (shared [DetailList], also used on Home/Care) into its own big,
+/// shadowed card for this screen — black, 3pt-larger label/value text
+/// (12/14 → 15/17) as requested. Deliberately a local widget rather than
+/// changing the shared `DetailList` itself, since Home and Care use that
+/// widget too and neither was asked for this styling.
+class _BehindTheBrandCard extends StatelessWidget {
+  final List<DetailRow> rows;
+  final bool desktop;
+  const _BehindTheBrandCard({required this.rows, this.desktop = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final fontSize = (desktop ? 17 : 15).sp;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: (desktop ? 24 : 18).w,
+        vertical: (desktop ? 8 : 6).h,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular((desktop ? 28 : 22).r),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x14101F1C),
+            blurRadius: 24,
+            offset: Offset(0, 8.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(rows.length, (i) {
+          final row = rows[i];
+          if (row.label.isEmpty && row.value.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          final isLast = i == rows.length - 1;
+          return Container(
+            padding: EdgeInsets.symmetric(vertical: (desktop ? 17 : 13).h),
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : const Border(
+                      bottom: BorderSide(color: AppColors.border, width: 1),
+                    ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    row.label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 18.w),
+                Flexible(
+                  child: Text(
+                    row.value,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
 /// One certification's display data — real [CertificationDetail] fields
 /// reshaped for [_CertCard], with every field independently optional (a
 /// certificate record can legitimately have some fields and not others).
@@ -247,4 +330,3 @@ class _CertCard extends StatelessWidget {
     );
   }
 }
-  

@@ -66,19 +66,11 @@ class JourneyStop {
   final String destinationLabel;
   final String transportMode;
   final String distanceLabel;
-  // Added for the richer per-process breakdown: water/energy/emissions
-  // pulled straight off this process's own API detail lists. `summaryRows`
-  // is the always-visible single box (transport/water/energy/emissions,
-  // energy already combined into one line) — everything else
-  // (per-energy-source breakdown, waste, the production-detail grid) is
-  // "rest details" shown only inside the card's accordion. Every one of
-  // these is independently optional — an empty list means "this batch has
-  // nothing here" — screens render SizedBox.shrink() for it.
+  // The always-visible summary box: Energy → Water → Transport → Waste →
+  // Emissions, each row combined from this process's own API detail
+  // lists and independently optional — an empty list means "this batch
+  // has nothing here" and the screen renders SizedBox.shrink() for it.
   final List<TinyRow> summaryRows;
-  final List<TinyRow> waterRows;
-  final List<TinyRow> wasteRows;
-  final List<TinyRow> energyRows;
-  final List<TinyRow> productionRows;
   const JourneyStop({
     required this.emoji,
     required this.title,
@@ -93,10 +85,6 @@ class JourneyStop {
     this.transportMode = '',
     this.distanceLabel = '',
     this.summaryRows = const [],
-    this.waterRows = const [],
-    this.wasteRows = const [],
-    this.energyRows = const [],
-    this.productionRows = const [],
   });
 }
 
@@ -122,10 +110,15 @@ class StoryBoxContent {
   final String emoji;
   final String title;
   final String text;
+  // A real brand logo image asset, shown instead of [emoji] when set (the
+  // Brand screen's story box uses this for the client's actual logo rather
+  // than a generic paws emoji).
+  final String imageAsset;
   const StoryBoxContent({
     required this.emoji,
     required this.title,
     required this.text,
+    this.imageAsset = '',
   });
 
   static const empty = StoryBoxContent(emoji: '', title: '', text: '');
